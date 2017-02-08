@@ -7,42 +7,32 @@ OUTPUT_FILE=""
 
 function usage() {
 	program=(${0//\.\//})
-	echo $program
+	echo"$program [-h] directory output_file"
 }
 
 function process_args() {
-	temp=`getopt -o h --long help -- "$@"`
-	eval set --"$TEMP"
 
-	while true; do
-		case "$1" in
-			-h|--help)
+	while getopts ":h" opt; do
+		case $opt in
+			h)
 				usage
-				exit 0
+				exit 101
 				;;
-			/?)
+			\?)
 				usage
-				exit 1
-				;;
-			:)
-				usage
-				exit 1
-				;;
-			*)
-				echo "Internal error!"
-				exit 1
+				exit 102
 				;;
 		esac
 	done
 
-	if [ "$#" -ne 3 ]; then
+	if [ "$#" -ne 2 ]; then
 		usage
-		exit 1
+		exit 110
 	fi
 
 	if [ ! -e "$1" ] || [ ! -d $1 ]; then
 		echo "$1 does not exists or is not a directory"
-		exit 1;
+		exit 111;
 	fi
 
 	DIR=$1
@@ -60,9 +50,11 @@ function rhash() {
 	total=${#FILES[@]}
 	
 	for file in "${FILES[@]}"; do
+		term_w=`tput cols`
+
 		echo -ne "\r\033[K$file\t[$file_num out of $total]"
 		if [ $DEBUG = true ]; then
-			echo "$file" >> $OUTPUT_FILE
+			sleep 1
 		else
 			md5sum "$file" >> $OUTPUT_FILE
 		fi
