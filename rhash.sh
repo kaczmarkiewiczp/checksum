@@ -9,8 +9,14 @@ DIR=""
 OUTPUT_FILE=""
 
 function usage() {
+	underline="\e[4m"
+	norm="\e[0m"
 	program=(${0//\.\//})
-	echo"$program [-h] directory output_file"
+
+	echo -en "$program [-h] "
+	echo -en "$underline""directory$norm "
+	echo -en "$underline""output file$norm"
+	echo ""
 }
 
 function process_args() {
