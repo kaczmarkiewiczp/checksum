@@ -67,7 +67,12 @@ function rhash() {
 			prefix="$first_half...$second_half"
 		fi
 		echo -ne "\r\033[K$prefix$postfix"
-		#md5sum "$file" >> $OUTPUT_FILE
+		
+		if [ $DEBUG = true ]; then
+			sleep 1
+		else
+			md5sum "$file" >> $OUTPUT_FILE
+		fi
 		((file_num++))
 	done
 	echo ""
