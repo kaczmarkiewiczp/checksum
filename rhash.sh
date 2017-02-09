@@ -48,16 +48,26 @@ function get_all_files() {
 function rhash() {
 	file_num=1
 	total=${#FILES[@]}
-	
+
 	for file in "${FILES[@]}"; do
 		term_w=`tput cols`
+		prefix="$file"
+		postfix="        [$file_num out of $total]"
+		length=$(( ${#prefix} + ${#postfix}))
+		
+		if [ $length -gt $term_w ]; then
+			term_w=$(( $term_w - ${#postfix} ))
+			remove=$(( ${#prefix} - $term_w ))
+			first_half="${prefix:0:$((${#prefix} / 2))}"
+			first_half="${first_half::-$(($remove / 2))}"
 
-		echo -ne "\r\033[K$file\t[$file_num out of $total]"
-		if [ $DEBUG = true ]; then
-			sleep 1
-		else
-			md5sum "$file" >> $OUTPUT_FILE
+			second_half="${prefix:$((${#prefix} / 2)):${#prefix}}"
+			second_half="${second_half:$(($remove / 2))}"
+
+			prefix="$first_half...$second_half"
 		fi
+		echo -ne "\r\033[K$prefix$postfix"
+		#md5sum "$file" >> $OUTPUT_FILE
 		((file_num++))
 	done
 	echo ""
