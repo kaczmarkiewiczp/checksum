@@ -24,7 +24,7 @@ function process_args() {
 		case $opt in
 			h)
 				usage
-				exit 101
+				exit 0
 				;;
 			\?)
 				usage
@@ -38,7 +38,7 @@ function process_args() {
 		exit 110
 	fi
 
-	if [ ! -e "$1" ] || [ ! -d $1 ]; then
+	if [ ! -e "$1" ] || [ ! -d "$1" ]; then
 		echo "$1 does not exists or is not a directory"
 		exit 111;
 	fi
@@ -104,6 +104,6 @@ function rhash() {
 	echo ""
 }
 
-process_args $@
+process_args "$@"
 get_all_files
 rhash
