@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# TODO (2) leave comments everywhere
+# TODO (1) bug: directories with spaces in them are not handled correctly
+# TODO (2) allow of specifying multiple directories for hashing
+#	this means that input will have to be output_file input_dir...
+# TODO (3) leave comments everywhere
 
 DEBUG=false
 FILES=()
