@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # TODO (2) leave comments everywhere
-# TODO (3) disable DEBUG mode
 
-DEBUG=true
+DEBUG=false
 FILES=()
 DIR=""
 OUTPUT_FILE=""
