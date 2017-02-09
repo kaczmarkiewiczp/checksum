@@ -56,8 +56,8 @@ function rhash() {
 		length=$(( ${#prefix} + ${#postfix}))
 		
 		if [ $length -gt $term_w ]; then
-			term_w=$(( $term_w - ${#postfix} ))
-			remove=$(( ${#prefix} - $term_w ))
+			term_w=$(( $term_w - ${#postfix} - 5))
+			remove=$(( ${#prefix} - $term_w))
 			first_half="${prefix:0:$((${#prefix} / 2))}"
 			first_half="${first_half::-$(($remove / 2))}"
 
