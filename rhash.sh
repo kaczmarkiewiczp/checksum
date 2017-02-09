@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# TODO (1) create function for building output string
 # TODO (2) leave comments everywhere
 # TODO (3) disable DEBUG mode
 
@@ -49,33 +48,47 @@ function get_all_files() {
 	done
 }
 
+function output_progress() {
+	file=$1
+	file_num=$2
+	total=$3
+
+	term_w=`tput cols`
+	prefix="$file"
+	postfix=" [$file_num out of $total]"
+	length=$(( ${#prefix} + ${#postfix}))
+
+	if [ $length -gt $term_w ]; then
+		aval_w=$(( $term_w - ${#postfix} - 5))
+		remove=$(( ${#prefix} - $aval_w))
+		first_half="${prefix:0:$((${#prefix} / 2))}"
+		first_half="${first_half::-$(($remove / 2))}"
+
+		second_half="${prefix:$((${#prefix} / 2)):${#prefix}}"
+		second_half="${second_half:$(($remove / 2))}"
+
+		prefix="$first_half...$second_half"
+	fi
+
+	aval_w=$((${#prefix} + ${#postfix}))
+	aval_w=$(($term_w - $aval_w - 1))
+	
+	if [ $aval_w -gt 1 ]; then
+		padding=`for ((i=1; i<=$aval_w; i++)); do echo -n " "; done`
+	else
+		padding=""
+	fi
+
+	echo -ne "\r\033[K$prefix$padding$postfix"
+}
+
 function rhash() {
 	file_num=1
 	total=${#FILES[@]}
 
 	for file in "${FILES[@]}"; do
-		term_w=`tput cols`
-		prefix="$file"
-		postfix=" [$file_num out of $total]"
-		length=$(( ${#prefix} + ${#postfix}))
-		
-		if [ $length -gt $term_w ]; then
-			aval_w=$(( $term_w - ${#postfix} - 5))
-			remove=$(( ${#prefix} - $aval_w))
-			first_half="${prefix:0:$((${#prefix} / 2))}"
-			first_half="${first_half::-$(($remove / 2))}"
+		output_progress $file $file_num $total
 
-			second_half="${prefix:$((${#prefix} / 2)):${#prefix}}"
-			second_half="${second_half:$(($remove / 2))}"
-
-			prefix="$first_half...$second_half"
-		fi
-		
-		aval_w=$((${#prefix} + ${#postfix}))
-		aval_w=$(($term_w - $aval_w - 1))
-		padding=`for ((i=1; i<=$aval_w; i++)); do echo -n " "; done`
-		echo -ne "\r\033[K$prefix$padding$postfix"
-		
 		if [ $DEBUG = true ]; then
 			sleep 1
 		else
