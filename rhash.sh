@@ -1,15 +1,18 @@
 #!/bin/bash
 
+# rhash: recursively scan specified directory for files. Create a hash (md5)
+# of all the files and append them to a specified output file
+
 # TODO (1) bug: directories with spaces in them are not handled correctly
 # TODO (2) allow of specifying multiple directories for hashing
 #	this means that input will have to be output_file input_dir...
-# TODO (3) leave comments everywhere
 
 DEBUG=false
 FILES=()
 DIR=""
 OUTPUT_FILE=""
 
+# prints program usage
 function usage() {
 	underline="\e[4m"
 	norm="\e[0m"
@@ -21,6 +24,7 @@ function usage() {
 	echo ""
 }
 
+# process arguements
 function process_args() {
 
 	while getopts ":h" opt; do
@@ -41,6 +45,7 @@ function process_args() {
 		exit 110
 	fi
 
+	# check if specified directory exists/is a dir
 	if [ ! -e "$1" ] || [ ! -d "$1" ]; then
 		echo "$1 does not exists or is not a directory"
 		exit 111;
@@ -50,12 +55,14 @@ function process_args() {
 	OUTPUT_FILE=$2
 }
 
+# get all the files from specified dir and save them into an array
 function get_all_files() {
 	for file in $(find $DIR -type f); do
 		FILES+=($file)
 	done
 }
 
+# outputs progress of files processed
 function output_progress() {
 	file=$1
 	file_num=$2
@@ -90,6 +97,7 @@ function output_progress() {
 	echo -ne "\r\033[K$prefix$padding$postfix"
 }
 
+# hash files in the array of files
 function rhash() {
 	file_num=1
 	total=${#FILES[@]}
