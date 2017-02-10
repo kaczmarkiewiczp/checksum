@@ -19,8 +19,8 @@ function usage() {
 	program=(${0//\.\//})
 
 	echo -en "$program [-h] "
-	echo -en "$underline""directory$norm "
 	echo -en "$underline""output file$norm"
+	echo -en "$underline""directory...$norm "
 	echo ""
 }
 
@@ -40,23 +40,23 @@ function process_args() {
 		esac
 	done
 
-	if [ "$#" -ne 2 ]; then
+	# check that at least two arguments are passed in (output input)
+	if [ "$#" -lt 2 ]; then
 		usage
 		exit 110
 	fi
 
-	# check if specified directory exists/is a dir
-	if [ ! -e "$1" ] || [ ! -d "$1" ]; then
-		echo "$1 does not exists or is not a directory"
-		exit 111;
-	fi
-
-	DIR="$1"
-	OUTPUT_FILE="$2"
+	OUTPUT_FILE="$1"
 }
 
 # get all the files from specified dir and save them into an array
 function get_all_files() {
+	# check if dir is a dir and if it exists
+	if [ ! -e "$DIR" ] || [ ! -d "$DIR" ]; then
+		echo "$DIR does not exists or is not a directory."
+		return
+	fi
+
 	for file in $(find "$DIR" -type f); do
 		FILES+=("$file")
 	done
@@ -106,7 +106,7 @@ function rhash() {
 		output_progress "$file" $file_num $total
 
 		if [ $DEBUG = true ]; then
-			sleep 1
+			sleep 0.1
 		else
 			md5sum "$file" >> $OUTPUT_FILE
 		fi
@@ -116,5 +116,10 @@ function rhash() {
 }
 
 process_args "$@"
-get_all_files
-rhash
+
+# skip first argument (output file) and go through each dir one-by-one
+for dir in "${@:2}"; do
+	DIR="$dir"
+	get_all_files
+	rhash
+done
