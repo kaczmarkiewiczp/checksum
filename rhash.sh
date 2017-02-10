@@ -7,7 +7,7 @@
 # TODO (2) allow of specifying multiple directories for hashing
 #	this means that input will have to be output_file input_dir...
 
-DEBUG=false
+DEBUG=true
 FILES=()
 DIR=""
 OUTPUT_FILE=""
@@ -51,22 +51,22 @@ function process_args() {
 		exit 111;
 	fi
 
-	DIR=$1
-	OUTPUT_FILE=$2
+	DIR="$1"
+	OUTPUT_FILE="$2"
 }
 
 # get all the files from specified dir and save them into an array
 function get_all_files() {
-	for file in $(find $DIR -type f); do
-		FILES+=($file)
+	for file in $(find "$DIR" -type f); do
+		FILES+=("$file")
 	done
 }
 
 # outputs progress of files processed
 function output_progress() {
-	file=$1
-	file_num=$2
-	total=$3
+	file="$1"
+	file_num="$2"
+	total="$3"
 
 	term_w=`tput cols`
 	prefix="$file"
@@ -103,7 +103,7 @@ function rhash() {
 	total=${#FILES[@]}
 
 	for file in "${FILES[@]}"; do
-		output_progress $file $file_num $total
+		output_progress "$file" $file_num $total
 
 		if [ $DEBUG = true ]; then
 			sleep 1
