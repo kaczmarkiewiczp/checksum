@@ -18,7 +18,7 @@ function usage() {
 	norm="\e[0m"
 	program=(${0//\.\//})
 
-	echo -en "$program [-h] "
+	echo -en "$program [options] "
 	echo -en "$underline""output file$norm"
 	echo -en "$underline""directory...$norm "
 	echo ""
@@ -26,6 +26,8 @@ function usage() {
 
 # process arguements
 function process_args() {
+
+	flag_count=0
 
 	while getopts ":h" opt; do
 		case $opt in
@@ -39,6 +41,8 @@ function process_args() {
 				;;
 		esac
 	done
+
+	shift $flag_count # remove flags from arguments
 
 	# check that at least two arguments are passed in (output input)
 	if [ "$#" -lt 2 ]; then
