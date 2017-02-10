@@ -3,10 +3,6 @@
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
 
-# TODO (1) bug: directories with spaces in them are not handled correctly
-# TODO (2) allow of specifying multiple directories for hashing
-#	this means that input will have to be output_file input_dir...
-
 DEBUG=true
 FILES=()
 DIR=""
@@ -18,19 +14,26 @@ function usage() {
 	norm="\e[0m"
 	program=(${0//\.\//})
 
-	echo -en "$program [options] "
-	echo -en "$underline""output file$norm"
-	echo -en "$underline""directory...$norm "
-	echo ""
+	echo -en "$program [option...] "
+	echo -en "$underline""output file$norm "
+	echo -en "$underline""directory...$norm\n"
+	echo -en "Options:\n"
+	echo -en "  -a\tappend to output file instead of overwriting it\n"
+	echo -en "  -h\tdisplay this message and quit\n"
 }
 
-# process arguements
+# process arguments
 function process_args() {
 
 	flag_count=0
+	append_output=false
 
-	while getopts ":h" opt; do
+	while getopts ":ha" opt; do
 		case $opt in
+			a)
+				append_output=true
+				((flag_count++))
+				;;
 			h)
 				usage
 				exit 0
@@ -51,6 +54,11 @@ function process_args() {
 	fi
 
 	OUTPUT_FILE="$1"
+	
+	# clear file if it doesn't exists and append flag is not specified
+	if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
+		> $OUTPUT_FILE
+	fi
 }
 
 # get all the files from specified dir and save them into an array
