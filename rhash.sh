@@ -127,11 +127,22 @@ function rhash() {
 	echo ""
 }
 
+START=`date +%s`
 process_args "$@"
-
+TOTAL_FILES=0
 # skip first argument (output file) and go through each dir one-by-one
 for dir in "${@:2}"; do
 	DIR="$dir"
 	get_all_files
+	((TOTAL_FILES+=${#FILES[@]}))
 	rhash
 done
+END=`date +%s`
+RUNTIME=$(($END - $START))
+if [ $RUNTIME -lt 3600 ]; then
+	RUNTIME=`date -u -d @${RUNTIME} +"%M:%S"`
+	echo "Hashed $TOTAL_FILES files in $RUNTIME minutes"
+else
+	RUNTIME=`date -u -d @${RUNTIME} +"%T"`
+	echo "Hashed $TOTAL_FILES files in $RUNTIME hours"
+fi
