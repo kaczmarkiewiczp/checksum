@@ -13,7 +13,7 @@ FLAG_SORT=true
 function usage() {
 	underline="\e[4m"
 	norm="\e[0m"
-	program=(${0//\.\//})
+	program=`basename $0`
 
 	echo -en "$program [option...] "
 	echo -en "$underline""output file$norm "
