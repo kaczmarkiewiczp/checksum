@@ -5,10 +5,9 @@
 
 DEBUG=false
 FILES=()
-DIR=""
+DIRECTORIES=()
 OUTPUT_FILE=""
 FLAG_SORT=true
-FLAG_COUNT=0
 
 # prints program usage
 function usage() {
@@ -20,48 +19,54 @@ function usage() {
 	echo -en "$underline""output file$norm "
 	echo -en "$underline""directory...$norm\n"
 	echo -en "Options:\n"
-	echo -en "  -a\tappend to output file instead of overwriting it\n"
-	echo -en "  -s\tsort the output file (default behaviour)\n"
-	echo -en "  -S\tdon't sort the output file\n"
-	echo -en "  -h\tdisplay this message and quit\n"
+	echo -en "  -a, --append\t\tappend to output file instead of overwriting it\n"
+	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
+	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
+	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 }
 
 # process arguments
 function process_args() {
 	append_output=false
+	flag_count=0
 
-	while getopts ":hasS" opt; do
+	for opt in "${@}"; do
 		case $opt in
-			a)
+			-a|--append)
 				append_output=true
-				((FLAG_COUNT++))
+				((flag_count++))
 				;;
-			s)	FLAG_SORT=true
-				((FLAG_COUNT++))
+			-s|--sort-output)
+				flag_sort=true
+				((flag_count++))
 				;;
-			S)
-				FLAG_SORT=false
-				((FLAG_COUNT++))
+			-S|--no-sort)
+				flag_sort=false
 				;;
-			h)
+			-h|--help)
 				usage
 				exit 0
 				;;
-			\?)
+			-*|--*)
 				usage
 				exit 102
+				;;
+			*)
+				if [ -z $OUTPUT_FILE ]; then
+					OUTPUT_FILE="$opt"
+				else
+					DIRECTORIES+=("$opt")
+				fi
 				;;
 		esac
 	done
 
-	# check that at least two arguments are passed in (output input)
-	if [ $(($# - $FLAG_COUNT)) -lt 2 ]; then
+	# check that output file and at least one directory was specified
+	if [ -z $OUTPUT_FILE ] || [ ${#DIRECTORIES[@]} -eq 0 ]; then
 		usage
 		exit 110
 	fi
 
-	OUTPUT_FILE="$1"
-	
 	# clear file if it doesn't exists and append flag is not specified
 	if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
 		> $OUTPUT_FILE
@@ -70,13 +75,14 @@ function process_args() {
 
 # get all the files from specified dir and save them into an array
 function get_all_files() {
+	dir="$1"
 	# check if dir is a dir and if it exists
-	if [ ! -e "$DIR" ] || [ ! -d "$DIR" ]; then
-		echo "$DIR does not exists or is not a directory."
+	if [ ! -e "$dir" ] || [ ! -d "$dir" ]; then
+		echo "$dir does not exists or is not a directory."
 		return
 	fi
 
-	for file in $(find "$DIR" -type f); do
+	for file in $(find "$dir" -type f); do
 		FILES+=("$file")
 	done
 }
@@ -135,15 +141,13 @@ function rhash() {
 }
 
 function main() {
-	START=`date +%s`
+	start=`date +%s`
 	process_args "$@"
-	TOTAL_FILES=0
-	# skip all options and output file and go through each dir one-by-one
-	shift $(($FLAG_COUNT + 1))
-	for dir in "${@}"; do
-		DIR="$dir"
-		get_all_files
-		((TOTAL_FILES+=${#FILES[@]}))
+	total_files=0
+	# go through each dir one-by-one
+	for dir in "${DIRECTORIES[@]}"; do
+		get_all_files "$dir"
+		((total_files+=${#FILES[@]}))
 		rhash
 	done
 
@@ -151,14 +155,14 @@ function main() {
 		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 	fi
 
-	END=`date +%s`
-	RUNTIME=$(($END - $START))
-	if [ $RUNTIME -lt 3600 ]; then
-		RUNTIME=`date -u -d @${RUNTIME} +"%M:%S"`
-		echo "Hashed $TOTAL_FILES files in $RUNTIME minutes"
+	end=`date +%s`
+	runtime=$(($end - $start))
+	if [ $runtime -lt 3600 ]; then
+		runtime=`date -u -d @${runtime} +"%M:%S"`
+		echo "Hashed $total_files files in $runtime minutes"
 	else
-		RUNTIME=`date -u -d @${RUNTIME} +"%T"`
-		echo "Hashed $TOTAL_FILES files in $RUNTIME hours"
+		runtime=`date -u -d @${runtime} +"%T"`
+		echo "Hashed $total_files files in $runtime hours"
 	fi
 }
 
