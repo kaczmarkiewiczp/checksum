@@ -8,6 +8,7 @@ FILES=()
 DIR=""
 OUTPUT_FILE=""
 FLAG_SORT=true
+FLAG_COUNT=0
 
 # prints program usage
 function usage() {
@@ -27,22 +28,20 @@ function usage() {
 
 # process arguments
 function process_args() {
-
-	flag_count=0
 	append_output=false
 
 	while getopts ":hasS" opt; do
 		case $opt in
 			a)
 				append_output=true
-				((flag_count++))
+				((FLAG_COUNT++))
 				;;
 			s)	FLAG_SORT=true
-				((flag_count++))
+				((FLAG_COUNT++))
 				;;
 			S)
 				FLAG_SORT=false
-				((flag_count++))
+				((FLAG_COUNT++))
 				;;
 			h)
 				usage
@@ -55,10 +54,8 @@ function process_args() {
 		esac
 	done
 
-	shift $flag_count # remove flags from arguments
-
 	# check that at least two arguments are passed in (output input)
-	if [ "$#" -lt 2 ]; then
+	if [ $(($# - $FLAG_COUNT)) -lt 2 ]; then
 		usage
 		exit 110
 	fi
@@ -141,8 +138,9 @@ function main() {
 	START=`date +%s`
 	process_args "$@"
 	TOTAL_FILES=0
-	# skip first argument (output file) and go through each dir one-by-one
-	for dir in "${@:2}"; do
+	# skip all options and output file and go through each dir one-by-one
+	shift $(($FLAG_COUNT + 1))
+	for dir in "${@}"; do
 		DIR="$dir"
 		get_all_files
 		((TOTAL_FILES+=${#FILES[@]}))
