@@ -150,7 +150,7 @@ function main() {
 	done
 
 	if [ $FLAG_SORT = true ]; then
-		sort -k2 "$OUTPUT_FILE" > "$OUTPUT_FILE"
+		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 	fi
 
 	END=`date +%s`
