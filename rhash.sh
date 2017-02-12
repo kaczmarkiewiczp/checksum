@@ -3,10 +3,11 @@
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
 
-DEBUG=true
+DEBUG=false
 FILES=()
 DIR=""
 OUTPUT_FILE=""
+FLAG_SORT=true
 
 # prints program usage
 function usage() {
@@ -19,6 +20,8 @@ function usage() {
 	echo -en "$underline""directory...$norm\n"
 	echo -en "Options:\n"
 	echo -en "  -a\tappend to output file instead of overwriting it\n"
+	echo -en "  -s\tsort the output file (default behaviour)\n"
+	echo -en "  -S\tdon't sort the output file\n"
 	echo -en "  -h\tdisplay this message and quit\n"
 }
 
@@ -28,10 +31,17 @@ function process_args() {
 	flag_count=0
 	append_output=false
 
-	while getopts ":ha" opt; do
+	while getopts ":hasS" opt; do
 		case $opt in
 			a)
 				append_output=true
+				((flag_count++))
+				;;
+			s)	FLAG_SORT=true
+				((flag_count++))
+				;;
+			S)
+				FLAG_SORT=true
 				((flag_count++))
 				;;
 			h)
@@ -127,22 +137,31 @@ function rhash() {
 	echo ""
 }
 
-START=`date +%s`
-process_args "$@"
-TOTAL_FILES=0
-# skip first argument (output file) and go through each dir one-by-one
-for dir in "${@:2}"; do
-	DIR="$dir"
-	get_all_files
-	((TOTAL_FILES+=${#FILES[@]}))
-	rhash
-done
-END=`date +%s`
-RUNTIME=$(($END - $START))
-if [ $RUNTIME -lt 3600 ]; then
-	RUNTIME=`date -u -d @${RUNTIME} +"%M:%S"`
-	echo "Hashed $TOTAL_FILES files in $RUNTIME minutes"
-else
-	RUNTIME=`date -u -d @${RUNTIME} +"%T"`
-	echo "Hashed $TOTAL_FILES files in $RUNTIME hours"
-fi
+function main() {
+	START=`date +%s`
+	process_args "$@"
+	TOTAL_FILES=0
+	# skip first argument (output file) and go through each dir one-by-one
+	for dir in "${@:2}"; do
+		DIR="$dir"
+		get_all_files
+		((TOTAL_FILES+=${#FILES[@]}))
+		rhash
+	done
+
+	if [ $FLAG_SORT = true ]; then
+		sort -k2 "$OUTPUT_FILE"
+	fi
+
+	END=`date +%s`
+	RUNTIME=$(($END - $START))
+	if [ $RUNTIME -lt 3600 ]; then
+		RUNTIME=`date -u -d @${RUNTIME} +"%M:%S"`
+		echo "Hashed $TOTAL_FILES files in $RUNTIME minutes"
+	else
+		RUNTIME=`date -u -d @${RUNTIME} +"%T"`
+		echo "Hashed $TOTAL_FILES files in $RUNTIME hours"
+	fi
+}
+
+main "$@"
