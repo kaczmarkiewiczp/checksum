@@ -41,7 +41,7 @@ function process_args() {
 				((flag_count++))
 				;;
 			S)
-				FLAG_SORT=true
+				FLAG_SORT=false
 				((flag_count++))
 				;;
 			h)
