@@ -2,8 +2,8 @@
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
 
-DEBUG=false:
-FILES=()
+DEBUG=false
+FILES=""
 DIRECTORIES=()
 OUTPUT_FILE=""
 FLAG_SORT=true
@@ -75,7 +75,7 @@ function process_args() {
 # get all the files from specified dir and save them into an array
 function get_all_files() {
 	dir="$1"
-	FILES=() # clear array
+	FILES="" # clear variable
 
 	# check if dir is a dir and if it exists
 	if [ ! -e "$dir" ] || [ ! -d "$dir" ]; then
@@ -83,9 +83,7 @@ function get_all_files() {
 		return
 	fi
 
-	for file in $(find "$dir" -type f); do
-		FILES+=("$file")
-	done
+	FILES=`find "$dir" -type f`
 }
 
 # outputs progress of files processed
@@ -126,18 +124,19 @@ function output_progress() {
 # hash files in the array of files
 function rhash() {
 	file_num=1
-	total=${#FILES[@]}
+	total=`echo "$FILES" | wc -l`
 
-	for file in "${FILES[@]}"; do
+	while read file; do
 		output_progress "$file" $file_num $total
 
 		if [ $DEBUG = true ]; then
-			sleep 0.1
+			sleep 0.05
+			$(echo "HASHED  $file" >> $OUTPUT_FILE)
 		else
 			md5sum "$file" >> $OUTPUT_FILE
 		fi
 		((file_num++))
-	done
+	done <<< "$FILES"
 	echo ""
 }
 
