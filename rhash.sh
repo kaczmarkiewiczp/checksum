@@ -38,11 +38,11 @@ function process_args() {
 				((flag_count++))
 				;;
 			-s|--sort-output)
-				flag_sort=true
+				FLAG_SORT=true
 				((flag_count++))
 				;;
 			-S|--no-sort)
-				flag_sort=false
+				FLAG_SORT=false
 				;;
 			-h|--help)
 				usage
