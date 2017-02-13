@@ -1,7 +1,8 @@
 #!/bin/bash
-
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
+
+# TODO: printing execution time
 
 DEBUG=false
 FILES=()
@@ -76,6 +77,8 @@ function process_args() {
 # get all the files from specified dir and save them into an array
 function get_all_files() {
 	dir="$1"
+	FILES=() # clear array
+
 	# check if dir is a dir and if it exists
 	if [ ! -e "$dir" ] || [ ! -d "$dir" ]; then
 		echo "$dir does not exists or is not a directory."
