@@ -2,9 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
 
-# TODO: printing execution time
-
-DEBUG=false
+DEBUG=false:
 FILES=()
 DIRECTORIES=()
 OUTPUT_FILE=""
@@ -98,7 +96,7 @@ function output_progress() {
 
 	term_w=`tput cols`
 	prefix="$file"
-	postfix=" [$file_num out of $total]"
+	postfix=" [$file_num of $total]"
 	length=$(( ${#prefix} + ${#postfix}))
 
 	if [ $length -gt $term_w ]; then
@@ -143,6 +141,19 @@ function rhash() {
 	echo ""
 }
 
+function print_runtime() {
+	if [ $1 -lt 60 ]; then
+		runtime=`date -u -d @${1} +"%S"`
+		echo "$runtime seconds"
+	elif [ $1 -ge 60 ] && [ $1 -lt 3600 ]; then
+		runtime=`date -u -d @${1} +"%M:%S"`
+		echo "$runtime minutes"
+	else
+		runtime=`date -u -d @${1} +"%T"`
+		echo "$runtime hours"
+	fi
+}
+
 function main() {
 	start=`date +%s`
 	process_args "$@"
@@ -160,13 +171,8 @@ function main() {
 
 	end=`date +%s`
 	runtime=$(($end - $start))
-	if [ $runtime -lt 3600 ]; then
-		runtime=`date -u -d @${runtime} +"%M:%S"`
-		echo "Hashed $total_files files in $runtime minutes"
-	else
-		runtime=`date -u -d @${runtime} +"%T"`
-		echo "Hashed $total_files files in $runtime hours"
-	fi
+	echo -n "Hashed $total_files files in "
+	print_runtime $runtime
 }
 
 main "$@"
