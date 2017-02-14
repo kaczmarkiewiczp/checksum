@@ -29,9 +29,9 @@ function usage() {
 	echo -en "  -a, --append\t\tappend to output file instead of overwriting it\n"
 	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
-	echo -en "      --simple-output\tdo not create a BSD-style checksum\n"
+	echo -en "      --no-tag\tdo not create a BSD-style checksum\n"
 	echo -en "  -A ALGORITHM,\n"
-	echo -en "  -[ALGORITHM],\n"
+	echo -en "  -ALGORITHM,\n"
 	echo -en "      --algorithm=[ALGORITHM]\n"
 	echo -en "\t\t\tuses the specified algorithm.\n"
 	echo -en "\t\t\tThe following options are available:\n"
@@ -99,7 +99,7 @@ function process_args() {
 				exit 0
 				;;
 			--version)
-				echo "$VERSION"
+				echo "$(basename $0) version $VERSION"
 				exit 0
 				;;
 			-*|--*)
