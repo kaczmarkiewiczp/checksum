@@ -15,6 +15,7 @@ OUTPUT_FILE=""
 TOTAL_FILES=0
 FLAG_SORT=true
 FLAG_SIMP_OUT=false
+FLAG_OUT2STDOUT=false
 
 # prints program usage
 function usage() {
@@ -37,6 +38,7 @@ function usage() {
 	echo -en "\t\t\tThe following options are available:\n"
 	echo -en "\t\t\t  md5\n\t\t\t  sha1\n\t\t\t  sha224\n\t\t\t  sha256\n"
 	echo -en "\t\t\t  sha384\n\t\t\t  sha512\n"
+	echo -en "  -o, --output2stdout\toutput hashes directly to stdout\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 }
 
@@ -62,6 +64,9 @@ function process_args() {
 				;;
 			-S|--no-sort)
 				FLAG_SORT=false
+				;;
+			-o|--out2stdout)
+				FLAG_OUT2STDOUT=true
 				;;
 			-md5|-sha1|-sha224|-sha256|-sha384|-sha512)
 				ALGORITHM=${opt:1}
@@ -115,14 +120,27 @@ function process_args() {
 		fi
 	done
 
-	# check that output file and at least one directory was specified
-	if [ -z $OUTPUT_FILE ] || [ ${#DIRECTORIES[@]} -eq 0 ]; then
+	# no output file specified
+	if [ -z $OUTPUT_FILE ] && [ $FLAG_OUT2STDOUT = false ]; then
+		usage
+		exit 110
+	fi
+
+	# output to stdout; our output file is part of directories to hash
+	if [ $FLAG_OUT2STDOUT = true ] && [ ! -z $OUTPUT_FILE ]; then
+		DIRECTORIES+=("$OUTPUT_FILE")
+		OUTPUT_FILE=""
+	fi
+
+	# check at least one directory was specified
+	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
 		usage
 		exit 110
 	fi
 
 	# clear file if it doesn't exists and append flag is not specified
-	if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
+	if [ $FLAG_OUT2STDOUT = false ] && [ $append_output = false ] && 
+	   [ -e $OUTPUT_FILE ]; then
 		> $OUTPUT_FILE
 	fi
 }
@@ -193,17 +211,23 @@ function rhash() {
 	((TOTAL_FILES+=$total))
 
 	while read file; do
-		output_progress "$file" $file_num $total
+		if [ $FLAG_OUT2STDOUT = false ]; then
+			output_progress "$file" $file_num $total
+		fi
 
 		if [ $DEBUG = true ]; then
 			sleep 0.05
 			$(echo "HASHED  $file" >> $OUTPUT_FILE)
+		elif [ $FLAG_OUT2STDOUT = true ]; then
+			$HASH_COMMAND "$file"
 		else
 			$HASH_COMMAND "$file" >> $OUTPUT_FILE
 		fi
 		((file_num++))
 	done <<< "$FILES"
-	echo ""
+	if [ $FLAG_OUT2STDOUT = false ]; then 
+		echo ""
+	fi
 }
 
 # prints execution time
@@ -230,14 +254,16 @@ function main() {
 		rhash
 	done
 
-	if [ $FLAG_SORT = true ]; then
+	if [ $FLAG_SORT = true ] && [ $FLAG_OUT2STDOUT = false ]; then
 		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 	fi
 
 	end=$(date +%s)
 	runtime=$(($end - $start))
-	echo -n "Hashed $TOTAL_FILES files in "
-	print_runtime $runtime
+	if [ $FLAG_OUT2STDOUT = false ]; then
+		echo -n "Hashed $TOTAL_FILES files in "
+		print_runtime $runtime
+	fi
 }
 
 main "$@"
