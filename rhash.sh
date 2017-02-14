@@ -2,7 +2,6 @@
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
 #
-# TODO: add flag for printing hashes to stdout
 # TODO: change output if execution time >=86,400 (24 hours)
 # TODO: change output if execution time is exactly one minutes or hour
 
