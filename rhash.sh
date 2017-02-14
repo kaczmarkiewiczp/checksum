@@ -2,9 +2,9 @@
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
 #
-# TODO: change output if execution time >=86,400 (24 hours)
-# TODO: change output if execution time is exactly one minutes or hour
+# TODO (1): when processing arguments, print reason of error
 
+VERSION=1.0
 DEBUG=false
 HASH_COMMAND=""
 ALGORITHM="md5"
@@ -39,6 +39,7 @@ function usage() {
 	echo -en "\t\t\t  sha384\n\t\t\t  sha512\n"
 	echo -en "  -o, --output2stdout\toutput hashes directly to stdout\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
+	echo -en "      --version\t\tprint version information and exit\n"
 }
 
 # process arguments
@@ -95,6 +96,10 @@ function process_args() {
 				;;
 			-h|--help)
 				usage
+				exit 0
+				;;
+			--version)
+				echo "$VERSION"
 				exit 0
 				;;
 			-*|--*)
