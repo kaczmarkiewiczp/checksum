@@ -161,13 +161,13 @@ function get_all_files() {
 	dir="$1"
 	FILES="" # clear variable
 
-	# check if dir is a dir and if it exists
-	if [ ! -e "$dir" ] || [ ! -d "$dir" ]; then
+	if [ -d "$dir" ]; then
+		FILES=$(find "$dir" -type f)
+	elif [ -f "$dir" ]; then
+		FILES="$dir"
+	else
 		echo "$dir does not exists or is not a directory."
-		return
 	fi
-
-	FILES=$(find "$dir" -type f)
 }
 
 # outputs progress of files processed
@@ -210,7 +210,7 @@ function rhash() {
 	file_num=1
 	total=$(echo "$FILES" | wc -l)
 
-	if [ -z $FILES ]; then
+	if [ -z "$FILES" ]; then
 		return
 	fi
 
