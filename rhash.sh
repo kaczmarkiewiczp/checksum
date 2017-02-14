@@ -12,6 +12,7 @@ ALGORITHM="md5"
 FILES=""
 DIRECTORIES=()
 OUTPUT_FILE=""
+TOTAL_FILES=0
 FLAG_SORT=true
 FLAG_SIMP_OUT=false
 
@@ -187,6 +188,7 @@ function output_progress() {
 function rhash() {
 	file_num=1
 	total=$(echo "$FILES" | wc -l)
+	((TOTAL_FILES+=$total))
 
 	while read file; do
 		output_progress "$file" $file_num $total
@@ -220,11 +222,9 @@ function main() {
 	start=$(date +%s)
 	process_args "$@"
 	create_hash_command
-	total_files=0
 	# go through each dir one-by-one
 	for dir in "${DIRECTORIES[@]}"; do
 		get_all_files "$dir"
-		((total_files+=${#FILES[@]}))
 		rhash
 	done
 
@@ -234,7 +234,7 @@ function main() {
 
 	end=$(date +%s)
 	runtime=$(($end - $start))
-	echo -n "Hashed $total_files files in "
+	echo -n "Hashed $TOTAL_FILES files in "
 	print_runtime $runtime
 }
 
