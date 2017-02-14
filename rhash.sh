@@ -8,7 +8,7 @@
 
 DEBUG=false
 HASH_COMMAND=""
-ALGORITHM="md5"
+ALGORITHM=""
 FILES=""
 DIRECTORIES=()
 OUTPUT_FILE=""
@@ -54,23 +54,8 @@ function process_args() {
 			-S|--no-sort)
 				FLAG_SORT=false
 				;;
-			-md5)
-				ALGORITHM="md5"
-				;;
-			-sha1)
-				ALGORITHM="sha1"
-				;;
-			-sha224)
-				ALGORITHM="sha224"
-				;;
-			-sha256)
-				ALGORITHM="sha256"
-				;;
-			-sha384)
-				ALGORITHM="sha384"
-				;;
-			-sha512)
-				ALGORITHM="sha512"
+			-md5|-sha1|-sha224|-sha256|-sha384|-sha5112)
+				ALGORITHM=${opt:1}
 				;;
 			--simple-output)
 				FLAG_SIMP_OUT=true
@@ -99,6 +84,11 @@ function process_args() {
 		exit 110
 	fi
 
+	# set default algorithm if it's not set
+	if [ -z $ALGORITHM ]; then
+		ALGORITHM="md5"
+	fi
+
 	# clear file if it doesn't exists and append flag is not specified
 	if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
 		> $OUTPUT_FILE
@@ -107,25 +97,8 @@ function process_args() {
 
 # creates appropriate hash command
 function create_hash_command() {
-	case $ALGORITHM in
-		"md5")
-			HASH_COMMAND="md5sum "
-			;;
-		"sha1")
-			HASH_COMMAND="sha1sum "
-			;;
-		"sha224")
-			HASH_COMMAND="sha224sum "
-			;;
-		"sha256")
-			HASH_COMMAND="sha256sum "
-			;;
-		"sha384")
-			HASH_COMMAND="sha384sum "
-			;;
-		"sha512")
-			HASH_COMMAND="sha512sum "
-	esac
+	HASH_COMMAND=$ALGORITHM
+	HASH_COMMAND+="sum"
 	
 	if [ $FLAG_SIMP_OUT = false ]; then
 		HASH_COMMAND+="--tag "
