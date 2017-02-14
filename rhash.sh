@@ -8,6 +8,7 @@
 
 DEBUG=false
 HASH_COMMAND=""
+ALGORITHM="md5"
 FILES=""
 DIRECTORIES=()
 OUTPUT_FILE=""
@@ -28,6 +29,10 @@ function usage() {
 	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "  --simple-output\tdo not create a BSD-style checksum\n"
+	echo -en "  -[algorithm]\t\tuses the specified algorithm.\n"
+	echo -en "\t\t\tThe following options are available:\n"
+	echo -en "\t\t\t  md5\n\t\t\t  sha1\n\t\t\t  sha224\n\t\t\t  sha256\n"
+	echo -en "\t\t\t  sha384\n\t\t\t  sha512\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 }
 
@@ -48,6 +53,24 @@ function process_args() {
 				;;
 			-S|--no-sort)
 				FLAG_SORT=false
+				;;
+			-md5)
+				ALGORITHM="md5"
+				;;
+			-sha1)
+				ALGORITHM="sha1"
+				;;
+			-sha224)
+				ALGORITHM="sha224"
+				;;
+			-sha256)
+				ALGORITHM="sha256"
+				;;
+			-sha384)
+				ALGORITHM="sha384"
+				;;
+			-sha512)
+				ALGORITHM="sha512"
 				;;
 			--simple-output)
 				FLAG_SIMP_OUT=true
@@ -84,8 +107,26 @@ function process_args() {
 
 # creates appropriate hash command
 function create_hash_command() {
-	HASH_COMMAND="md5sum "
-
+	case $ALGORITHM in
+		"md5")
+			HASH_COMMAND="md5sum "
+			;;
+		"sha1")
+			HASH_COMMAND="sha1sum "
+			;;
+		"sha224")
+			HASH_COMMAND="sha224sum "
+			;;
+		"sha256")
+			HASH_COMMAND="sha256sum "
+			;;
+		"sha384")
+			HASH_COMMAND="sha384sum "
+			;;
+		"sha512")
+			HASH_COMMAND="sha512sum "
+	esac
+	
 	if [ $FLAG_SIMP_OUT = false ]; then
 		HASH_COMMAND+="--tag "
 	fi
