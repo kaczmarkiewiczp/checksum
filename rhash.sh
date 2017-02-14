@@ -29,7 +29,8 @@ function usage() {
 	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "  --simple-output\tdo not create a BSD-style checksum\n"
-	echo -en "  -[algorithm]\t\tuses the specified algorithm.\n"
+	echo -en "  -[algorithm], -a [algorithm], --algorithm=[algorithm]\n"
+	echo -en "\t\t\tuses the specified algorithm.\n"
 	echo -en "\t\t\tThe following options are available:\n"
 	echo -en "\t\t\t  md5\n\t\t\t  sha1\n\t\t\t  sha224\n\t\t\t  sha256\n"
 	echo -en "\t\t\t  sha384\n\t\t\t  sha512\n"
@@ -59,13 +60,28 @@ function process_args() {
 			-S|--no-sort)
 				FLAG_SORT=false
 				;;
-			-md5|-sha1|-sha224|-sha256|-sha384|-sha5112)
+			-md5|-sha1|-sha224|-sha256|-sha384|-sha512)
 				ALGORITHM=${opt:1}
 				;;
 			-A)
 				ALGORITHM=""
 				expect_a=true
 				continue
+				;;
+			--algorithm=*)
+				ALGORITHM=$(echo $opt | cut -d '=' -f2)
+				if [ -z $ALGORITHM ]; then
+					expect_a=true;
+					continue
+				elif 	[ $ALGORITHM = "md5" ] || 
+					[ $ALGORITHM = "sha256" ] ||
+					[ $ALGORITHM = "sha384" ] ||
+					[ $ALGORITHM = "sha512" ]; then
+					: # don't do anything
+				else
+					usage
+					exit 104
+				fi
 				;;
 			--simple-output)
 				FLAG_SIMP_OUT=true
