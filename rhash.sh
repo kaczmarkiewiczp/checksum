@@ -4,7 +4,8 @@
 #
 # TODO (1): when processing arguments, print reason of error
 
-VERSION=1.0
+VERSION=1.1 
+EXE="$(basename $0)"
 DEBUG=false
 HASH_COMMAND=""
 ALGORITHM="md5"
@@ -20,9 +21,8 @@ FLAG_OUT2STDOUT=false
 function usage() {
 	underline="\e[4m"
 	norm="\e[0m"
-	program=$(basename $0)
 
-	echo -en "$program [option...] "
+	echo -en "$EXE [option...] "
 	echo -en "$underline""output file$norm "
 	echo -en "$underline""directory...$norm\n"
 	echo -en "Options:\n"
@@ -86,12 +86,19 @@ function process_args() {
 					[ $ALGORITHM = "sha384" ] ||
 					[ $ALGORITHM = "sha512" ]; then
 					: # don't do anything
+				elif [ -e $ALGORITHM ]; then
+					echo "$EXE: missing argument to" \
+					     "'--algorithm'"
+					echo "Try '$EXE --help' for more information"
+					exit 101
 				else
-					usage
-					exit 104
+					echo "$EXE: unknown argument to" \
+					     "--algorithm: '$ALGORITHM'"
+					echo "Try '$EXE --help' for more information"
+					exit 101
 				fi
 				;;
-			--simple-output)
+			--no-tag)
 				FLAG_SIMP_OUT=true
 				;;
 			-h|--help)
@@ -99,11 +106,17 @@ function process_args() {
 				exit 0
 				;;
 			--version)
-				echo "$(basename $0) version $VERSION"
+				echo "$EXE version $VERSION"
 				exit 0
 				;;
 			-*|--*)
-				usage
+				echo -n "$EXE: unknown option "
+				if [[ $opt = --* ]]; then
+					echo "'$opt'"
+				else
+					echo "'${opt:1}'"
+				fi
+				echo "Try '$EXE --help' for more information"
 				exit 102
 				;;
 			*)
@@ -118,7 +131,8 @@ function process_args() {
 
 		if [ $expect_a = true ]; then
 			if [ -z ALGORITHM ]; then
-				usage
+				echo "$EXE: missing argument to '-A, --algorithm'"
+				echo "Try '$EXE --help' for more information"
 				exit 103
 			fi
 			expect_a=false
@@ -128,7 +142,8 @@ function process_args() {
 	# no output file specified or output file is a dir
 	if [ -z $OUTPUT_FILE -o -d $OUTPUT_FILE ] && 
 	   [ $FLAG_OUT2STDOUT = false ]; then
-		usage
+		echo "$EXE: missing output file"
+		echo "Try '$EXE --help' for more information"
 		exit 110
 	fi
 
@@ -140,7 +155,8 @@ function process_args() {
 
 	# check at least one directory was specified
 	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
-		usage
+		echo "$EXE: missing files/directories for hashing"
+		echo "Try '$EXE --help' for more information"
 		exit 111
 	fi
 
