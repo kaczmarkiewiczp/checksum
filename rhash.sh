@@ -7,10 +7,12 @@
 # TODO: change output if execution time is exactly one minutes or hour
 
 DEBUG=false
+HASH_COMMAND=""
 FILES=""
 DIRECTORIES=()
 OUTPUT_FILE=""
 FLAG_SORT=true
+FLAG_SIMP_OUT=false
 
 # prints program usage
 function usage() {
@@ -25,6 +27,7 @@ function usage() {
 	echo -en "  -a, --append\t\tappend to output file instead of overwriting it\n"
 	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
+	echo -en "  --simple-output\tdo not create a BSD-style checksum\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 }
 
@@ -45,6 +48,9 @@ function process_args() {
 				;;
 			-S|--no-sort)
 				FLAG_SORT=false
+				;;
+			--simple-output)
+				FLAG_SIMP_OUT=true
 				;;
 			-h|--help)
 				usage
@@ -73,6 +79,15 @@ function process_args() {
 	# clear file if it doesn't exists and append flag is not specified
 	if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
 		> $OUTPUT_FILE
+	fi
+}
+
+# creates appropriate hash command
+function create_hash_command() {
+	HASH_COMMAND="md5sum "
+
+	if [ $FLAG_SIMP_OUT = false ]; then
+		HASH_COMMAND+="--tag "
 	fi
 }
 
@@ -137,13 +152,14 @@ function rhash() {
 			sleep 0.05
 			$(echo "HASHED  $file" >> $OUTPUT_FILE)
 		else
-			md5sum "$file" >> $OUTPUT_FILE
+			$HASH_COMMAND "$file" >> $OUTPUT_FILE
 		fi
 		((file_num++))
 	done <<< "$FILES"
 	echo ""
 }
 
+# prints execution time
 function print_runtime() {
 	if [ $1 -lt 60 ]; then
 		runtime=$(date -u -d @${1} +"%S")
@@ -160,6 +176,7 @@ function print_runtime() {
 function main() {
 	start=$(date +%s)
 	process_args "$@"
+	create_hash_command
 	total_files=0
 	# go through each dir one-by-one
 	for dir in "${DIRECTORIES[@]}"; do
