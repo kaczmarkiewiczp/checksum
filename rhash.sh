@@ -244,9 +244,11 @@ function print_runtime() {
 	elif [ $1 -ge 60 ] && [ $1 -lt 3600 ]; then
 		runtime=$(date -u -d @${1} +"%M:%S")
 		echo "$runtime minutes"
-	else
+	elif [ $1 -ge 3600 ] && [ $1 -lt 86400 ]; then
 		runtime=$(date -u -d @${1} +"%T")
 		echo "$runtime hours"
+	else
+		echo "more than a day"
 	fi
 }
 
