@@ -26,8 +26,10 @@ function usage() {
 	echo -en "$underline""output file$norm "
 	echo -en "$underline""directory...$norm\n"
 	echo -en "Options:\n"
-	echo -en "  -a, --append\t\tappend to output file instead of overwriting it\n"
-	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
+	echo -en "  -a, --append\t\tappend to output file instead of" \
+		 "overwriting it\n"
+	echo -en "  -s, --sort-output\tsort the output file (default " \
+		 "behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "      --no-tag\tdo not create a BSD-style checksum\n"
 	echo -en "  -A ALGORITHM,\n"
@@ -42,6 +44,11 @@ function usage() {
 	echo -en "      --version\t\tprint version information and exit\n"
 }
 
+# output message for getting help
+function try_help() {
+	echo "Try '$EXE --help' for more information"
+}
+
 # process arguments
 function process_args() {
 	append_output=false
@@ -54,8 +61,14 @@ function process_args() {
 		opt="${args[i]}"
 
 		# split grouped options (-abc -> -a -b -c)
-		if [[ $opt = -* ]] && [[ ! $opt = --* ]] && [ ${#opt} -gt 2 ]; then
+		if [[ $opt = -* ]] && [[ ! $opt = --* ]] && [ ${#opt} -gt 2 ]; 
+		then
 			while [ ${#opt} -gt 2 ]; do
+				if [ "${opt: -1}" = 'A' ]; then
+					echo "$EXE: option -A cannot be" \
+					"grouped together with other options"
+					exit 110
+				fi
 				args+=("-${opt: -1}")
 				opt="${opt: :-1}"
 			done
@@ -102,13 +115,13 @@ function process_args() {
 				elif [ -e $ALGORITHM ]; then
 					echo "$EXE: missing argument to" \
 					     "'--algorithm'"
-					echo "Try '$EXE --help' for more information"
-					exit 101
+					try_help
+					exit 111
 				else
 					echo "$EXE: unknown argument to" \
 					     "--algorithm: '$ALGORITHM'"
-					echo "Try '$EXE --help' for more information"
-					exit 102
+					try_help
+					exit 112
 				fi
 				;;
 			--no-tag)
@@ -123,14 +136,18 @@ function process_args() {
 				exit 0
 				;;
 			-*|--*)
-				echo -n "$EXE: unknown option "
-				if [[ $opt = --* ]]; then
-					echo "'$opt'"
+				if [ $expect_a = true ]; then
+					: # don't do anything
 				else
-					echo "'${opt:1}'"
+					echo -n "$EXE: unknown option "
+					if [[ $opt = --* ]]; then
+						echo "'$opt'"
+					else
+						echo "'${opt:1}'"
+					fi
+					try_help
+					exit 113
 				fi
-				echo "Try '$EXE --help' for more information"
-				exit 103
 				;;
 			*)
 				if [ -z $OUTPUT_FILE ] && 
@@ -144,9 +161,10 @@ function process_args() {
 
 		if [ $expect_a = true ]; then
 			if [ -z ALGORITHM ]; then
-				echo "$EXE: missing argument to '-A, --algorithm'"
-				echo "Try '$EXE --help' for more information"
-				exit 104
+				echo "$EXE: missing argument to '-A," \
+				     "--algorithm'"
+				try_help
+				exit 114
 			fi
 			expect_a=false
 		fi
@@ -156,8 +174,8 @@ function process_args() {
 	if [ -z $OUTPUT_FILE -o -d $OUTPUT_FILE ] && 
 	   [ $FLAG_OUT2STDOUT = false ]; then
 		echo "$EXE: missing output file"
-		echo "Try '$EXE --help' for more information"
-		exit 105
+		try_help
+		exit 115
 	fi
 
 	# output to stdout; our output file is part of directories to hash
@@ -169,8 +187,8 @@ function process_args() {
 	# check at least one directory was specified
 	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
 		echo "$EXE: missing files/directories for hashing"
-		echo "Try '$EXE --help' for more information"
-		exit 106
+		try_help
+		exit 116
 	fi
 
 	# clear file if it doesn't exists and append flag is not specified
