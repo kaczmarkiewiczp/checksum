@@ -209,6 +209,11 @@ function output_progress() {
 function rhash() {
 	file_num=1
 	total=$(echo "$FILES" | wc -l)
+
+	if [ -z $FILES ]; then
+		return
+	fi
+
 	((TOTAL_FILES+=$total))
 
 	while read file; do
