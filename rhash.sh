@@ -120,8 +120,9 @@ function process_args() {
 		fi
 	done
 
-	# no output file specified
-	if [ -z $OUTPUT_FILE ] && [ $FLAG_OUT2STDOUT = false ]; then
+	# no output file specified or output file is a dir
+	if [ -z $OUTPUT_FILE ] && [ -f $OUTPUT_FILE] && 
+	   [ $FLAG_OUT2STDOUT = false ]; then
 		usage
 		exit 110
 	fi
@@ -135,7 +136,7 @@ function process_args() {
 	# check at least one directory was specified
 	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
 		usage
-		exit 110
+		exit 111
 	fi
 
 	# clear file if it doesn't exists and append flag is not specified
