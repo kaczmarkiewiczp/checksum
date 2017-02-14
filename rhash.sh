@@ -4,7 +4,7 @@
 #
 # TODO (1): when processing arguments, print reason of error
 
-VERSION=1.1 
+VERSION=1.2 
 EXE="$(basename $0)"
 DEBUG=false
 HASH_COMMAND=""
@@ -31,7 +31,7 @@ function usage() {
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "      --no-tag\tdo not create a BSD-style checksum\n"
 	echo -en "  -A ALGORITHM,\n"
-	echo -en "  -ALGORITHM,\n"
+	echo -en "      --[ALGORITHM],\n"
 	echo -en "      --algorithm=[ALGORITHM]\n"
 	echo -en "\t\t\tuses the specified algorithm.\n"
 	echo -en "\t\t\tThe following options are available:\n"
@@ -48,9 +48,22 @@ function process_args() {
 	expect_a=false
 	flag_count=0
 
-	for opt in "${@}"; do
+	args=("$@") # put arguments into array
+
+	for (( i=0; i<${#args[@]}; i++)); do
+		opt="${args[i]}"
+
+		# split grouped options (-abc -> -a -b -c)
+		if [[ $opt = -* ]] && [[ ! $opt = --* ]] && [ ${#opt} -gt 2 ]; then
+			while [ ${#opt} -gt 2 ]; do
+				args+=("-${opt: -1}")
+				opt="${opt: :-1}"
+			done
+		fi
+
+		# expecting option for -A or --algorithm
 		if [ $expect_a = true ]; then
-			opt="-$opt"
+			opt="--$opt"
 		fi
 
 		case $opt in
@@ -68,8 +81,8 @@ function process_args() {
 			-o|--out2stdout)
 				FLAG_OUT2STDOUT=true
 				;;
-			-md5|-sha1|-sha224|-sha256|-sha384|-sha512)
-				ALGORITHM=${opt:1}
+			--md5|--sha1|--sha224|--sha256|--sha384|--sha512)
+				ALGORITHM=${opt:2}
 				;;
 			-A)
 				ALGORITHM=""
@@ -95,7 +108,7 @@ function process_args() {
 					echo "$EXE: unknown argument to" \
 					     "--algorithm: '$ALGORITHM'"
 					echo "Try '$EXE --help' for more information"
-					exit 101
+					exit 102
 				fi
 				;;
 			--no-tag)
@@ -117,7 +130,7 @@ function process_args() {
 					echo "'${opt:1}'"
 				fi
 				echo "Try '$EXE --help' for more information"
-				exit 102
+				exit 103
 				;;
 			*)
 				if [ -z $OUTPUT_FILE ] && 
@@ -133,7 +146,7 @@ function process_args() {
 			if [ -z ALGORITHM ]; then
 				echo "$EXE: missing argument to '-A, --algorithm'"
 				echo "Try '$EXE --help' for more information"
-				exit 103
+				exit 104
 			fi
 			expect_a=false
 		fi
@@ -144,7 +157,7 @@ function process_args() {
 	   [ $FLAG_OUT2STDOUT = false ]; then
 		echo "$EXE: missing output file"
 		echo "Try '$EXE --help' for more information"
-		exit 110
+		exit 105
 	fi
 
 	# output to stdout; our output file is part of directories to hash
@@ -157,7 +170,7 @@ function process_args() {
 	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
 		echo "$EXE: missing files/directories for hashing"
 		echo "Try '$EXE --help' for more information"
-		exit 111
+		exit 106
 	fi
 
 	# clear file if it doesn't exists and append flag is not specified
