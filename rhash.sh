@@ -29,7 +29,7 @@ function usage() {
 	echo -en "  -s, --sort-output\tsort the output file (default behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "  --simple-output\tdo not create a BSD-style checksum\n"
-	echo -en "  -[algorithm], -a [algorithm], --algorithm=[algorithm]\n"
+	echo -en "  -[algorithm], -A [algorithm], --algorithm=[algorithm]\n"
 	echo -en "\t\t\tuses the specified algorithm.\n"
 	echo -en "\t\t\tThe following options are available:\n"
 	echo -en "\t\t\t  md5\n\t\t\t  sha1\n\t\t\t  sha224\n\t\t\t  sha256\n"
