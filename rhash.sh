@@ -8,7 +8,7 @@
 
 DEBUG=false
 HASH_COMMAND=""
-ALGORITHM=""
+ALGORITHM="md5"
 FILES=""
 DIRECTORIES=()
 OUTPUT_FILE=""
@@ -39,9 +39,14 @@ function usage() {
 # process arguments
 function process_args() {
 	append_output=false
+	expect_a=false
 	flag_count=0
 
 	for opt in "${@}"; do
+		if [ $expect_a = true ]; then
+			opt="-$opt"
+		fi
+
 		case $opt in
 			-a|--append)
 				append_output=true
@@ -56,6 +61,11 @@ function process_args() {
 				;;
 			-md5|-sha1|-sha224|-sha256|-sha384|-sha5112)
 				ALGORITHM=${opt:1}
+				;;
+			-A)
+				ALGORITHM=""
+				expect_a=true
+				continue
 				;;
 			--simple-output)
 				FLAG_SIMP_OUT=true
@@ -76,17 +86,20 @@ function process_args() {
 				fi
 				;;
 		esac
+
+		if [ $expect_a = true ]; then
+			if [ -z ALGORITHM ]; then
+				usage
+				exit 103
+			fi
+			expect_a=false
+		fi
 	done
 
 	# check that output file and at least one directory was specified
 	if [ -z $OUTPUT_FILE ] || [ ${#DIRECTORIES[@]} -eq 0 ]; then
 		usage
 		exit 110
-	fi
-
-	# set default algorithm if it's not set
-	if [ -z $ALGORITHM ]; then
-		ALGORITHM="md5"
 	fi
 
 	# clear file if it doesn't exists and append flag is not specified
@@ -98,7 +111,7 @@ function process_args() {
 # creates appropriate hash command
 function create_hash_command() {
 	HASH_COMMAND=$ALGORITHM
-	HASH_COMMAND+="sum"
+	HASH_COMMAND+="sum "
 	
 	if [ $FLAG_SIMP_OUT = false ]; then
 		HASH_COMMAND+="--tag "
