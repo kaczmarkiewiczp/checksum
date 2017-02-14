@@ -17,27 +17,22 @@ FLAG_OUT2STDOUT=false
 
 # prints program usage
 function usage() {
-	underline="\e[4m"
-	norm="\e[0m"
-
-	echo -en "$EXE [option...] "
-	echo -en "$underline""output file$norm "
-	echo -en "$underline""directory...$norm\n"
+	echo -en "Usage: $EXE [OPTION]... OUTPUT FILE...\n"
+	echo -en "  or:  $EXE [OPTION]... -o FILE...\n"
+	echo -en "Recursively create hashes of files inside supplied directory\n"
 	echo -en "Options:\n"
 	echo -en "  -a, --append\t\tappend to output file instead of" \
 		 "overwriting it\n"
+	echo -en "  -A ALGORITHM,  --ALGORITHM,  --algorithm=ALGORITHM"
+	echo -en "   use specified algorithm\n"
+	echo -en "\t\t\tThe following options are available:\n"
+	echo -en "\t\t\t    md5 (default)\n\t\t\t    sha1\n\t\t\t    sha224\n "
+	echo -en "\t\t\t    sha256\n\t\t\t    sha384\n\t\t\t    sha512\n"
+	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
 	echo -en "  -s, --sort-output\tsort the output file (default " \
 		 "behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
-	echo -en "      --no-tag\tdo not create a BSD-style checksum\n"
-	echo -en "  -A ALGORITHM,\n"
-	echo -en "      --[ALGORITHM],\n"
-	echo -en "      --algorithm=[ALGORITHM]\n"
-	echo -en "\t\t\tuses the specified algorithm.\n"
-	echo -en "\t\t\tThe following options are available:\n"
-	echo -en "\t\t\t  md5\n\t\t\t  sha1\n\t\t\t  sha224\n\t\t\t  sha256\n"
-	echo -en "\t\t\t  sha384\n\t\t\t  sha512\n"
-	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
+	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 	echo -en "      --version\t\tprint version information and exit\n"
 }
