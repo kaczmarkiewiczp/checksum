@@ -1,6 +1,10 @@
 #!/bin/bash
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
+#
+# TODO: add flag for printing hashes to stdout
+# TODO: change output if execution time >=86,400 (24 hours)
+# TODO: change output if execution time is exactly one minutes or hour
 
 DEBUG=false
 FILES=""
@@ -12,7 +16,7 @@ FLAG_SORT=true
 function usage() {
 	underline="\e[4m"
 	norm="\e[0m"
-	program=`basename $0`
+	program=$(basename $0)
 
 	echo -en "$program [option...] "
 	echo -en "$underline""output file$norm "
@@ -83,7 +87,7 @@ function get_all_files() {
 		return
 	fi
 
-	FILES=`find "$dir" -type f`
+	FILES=$(find "$dir" -type f)
 }
 
 # outputs progress of files processed
@@ -92,7 +96,7 @@ function output_progress() {
 	file_num="$2"
 	total="$3"
 
-	term_w=`tput cols`
+	term_w=$(tput cols)
 	prefix="$file"
 	postfix=" [$file_num of $total]"
 	length=$(( ${#prefix} + ${#postfix}))
@@ -113,7 +117,7 @@ function output_progress() {
 	aval_w=$(($term_w - $aval_w - 1))
 	
 	if [ $aval_w -gt 1 ]; then
-		padding=`for ((i=1; i<=$aval_w; i++)); do echo -n " "; done`
+		padding=$(for ((i=1; i<=$aval_w; i++)); do echo -n " "; done)
 	else
 		padding=""
 	fi
@@ -124,7 +128,7 @@ function output_progress() {
 # hash files in the array of files
 function rhash() {
 	file_num=1
-	total=`echo "$FILES" | wc -l`
+	total=$(echo "$FILES" | wc -l)
 
 	while read file; do
 		output_progress "$file" $file_num $total
@@ -142,19 +146,19 @@ function rhash() {
 
 function print_runtime() {
 	if [ $1 -lt 60 ]; then
-		runtime=`date -u -d @${1} +"%S"`
+		runtime=$(date -u -d @${1} +"%S")
 		echo "$runtime seconds"
 	elif [ $1 -ge 60 ] && [ $1 -lt 3600 ]; then
-		runtime=`date -u -d @${1} +"%M:%S"`
+		runtime=$(date -u -d @${1} +"%M:%S")
 		echo "$runtime minutes"
 	else
-		runtime=`date -u -d @${1} +"%T"`
+		runtime=$(date -u -d @${1} +"%T")
 		echo "$runtime hours"
 	fi
 }
 
 function main() {
-	start=`date +%s`
+	start=$(date +%s)
 	process_args "$@"
 	total_files=0
 	# go through each dir one-by-one
@@ -168,7 +172,7 @@ function main() {
 		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 	fi
 
-	end=`date +%s`
+	end=$(date +%s)
 	runtime=$(($end - $start))
 	echo -n "Hashed $total_files files in "
 	print_runtime $runtime
