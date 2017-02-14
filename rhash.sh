@@ -12,7 +12,7 @@ DIRECTORIES=()
 OUTPUT_FILE=""
 TOTAL_FILES=0
 FLAG_SORT=true
-FLAG_SIMP_OUT=false
+FLAG_NO_TAG=false
 FLAG_OUT2STDOUT=false
 
 # prints program usage
@@ -123,7 +123,7 @@ function process_args() {
 				fi
 				;;
 			--no-tag)
-				FLAG_SIMP_OUT=true
+				FLAG_NO_TAG=true
 				;;
 			-h|--help)
 				usage
@@ -201,7 +201,7 @@ function create_hash_command() {
 	HASH_COMMAND=$ALGORITHM
 	HASH_COMMAND+="sum "
 	
-	if [ $FLAG_SIMP_OUT = false ]; then
+	if [ $FLAG_NO_TAG = false ]; then
 		HASH_COMMAND+="--tag "
 	fi
 }
