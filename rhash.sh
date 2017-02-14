@@ -1,8 +1,6 @@
 #!/bin/bash
 # rhash: recursively scan specified directory for files. Create a hash (md5)
 # of all the files and append them to a specified output file
-#
-# TODO (1): when processing arguments, print reason of error
 
 VERSION=1.2 
 EXE="$(basename $0)"
@@ -160,7 +158,7 @@ function process_args() {
 		esac
 
 		if [ $expect_a = true ]; then
-			if [ -z ALGORITHM ]; then
+			if [ -z $ALGORITHM ]; then
 				echo "$EXE: missing argument to '-A," \
 				     "--algorithm'"
 				try_help
