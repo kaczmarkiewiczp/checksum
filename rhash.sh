@@ -37,7 +37,7 @@ function usage() {
 	echo -en "\t\t\tThe following options are available:\n"
 	echo -en "\t\t\t  md5\n\t\t\t  sha1\n\t\t\t  sha224\n\t\t\t  sha256\n"
 	echo -en "\t\t\t  sha384\n\t\t\t  sha512\n"
-	echo -en "  -o, --output2stdout\toutput hashes directly to stdout\n"
+	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 	echo -en "      --version\t\tprint version information and exit\n"
 }
