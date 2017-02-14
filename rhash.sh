@@ -44,7 +44,7 @@ function usage() {
 
 # output message for getting help
 function try_help() {
-	echo "Try '$EXE --help' for more information"
+	echo "Try '$EXE --help' for more information" 1>&2
 }
 
 # process arguments
@@ -64,7 +64,7 @@ function process_args() {
 			while [ ${#opt} -gt 2 ]; do
 				if [ "${opt: -1}" = 'A' ]; then
 					echo "$EXE: option -A cannot be" \
-					"grouped together with other options"
+					"grouped together with other options" 1>&2
 					exit 110
 				fi
 				args+=("-${opt: -1}")
@@ -112,12 +112,12 @@ function process_args() {
 					: # don't do anything
 				elif [ -e $ALGORITHM ]; then
 					echo "$EXE: missing argument to" \
-					     "'--algorithm'"
+					     "'--algorithm'" 1>&2
 					try_help
 					exit 111
 				else
 					echo "$EXE: unknown argument to" \
-					     "--algorithm: '$ALGORITHM'"
+					     "--algorithm: '$ALGORITHM'" 1>&2
 					try_help
 					exit 112
 				fi
@@ -137,11 +137,11 @@ function process_args() {
 				if [ $expect_a = true ]; then
 					: # don't do anything
 				else
-					echo -n "$EXE: unknown option "
+					echo -n "$EXE: unknown option " 1>&2
 					if [[ $opt = --* ]]; then
-						echo "'$opt'"
+						echo "'$opt'" 1>&2
 					else
-						echo "'${opt:1}'"
+						echo "'${opt:1}'" 1>&2
 					fi
 					try_help
 					exit 113
@@ -160,7 +160,7 @@ function process_args() {
 		if [ $expect_a = true ]; then
 			if [ -z $ALGORITHM ]; then
 				echo "$EXE: missing argument to '-A," \
-				     "--algorithm'"
+				     "--algorithm'" 1>&2
 				try_help
 				exit 114
 			fi
@@ -171,7 +171,7 @@ function process_args() {
 	# no output file specified or output file is a dir
 	if [ -z $OUTPUT_FILE -o -d $OUTPUT_FILE ] && 
 	   [ $FLAG_OUT2STDOUT = false ]; then
-		echo "$EXE: missing output file"
+		echo "$EXE: missing output file" 1>&2
 		try_help
 		exit 115
 	fi
@@ -184,7 +184,7 @@ function process_args() {
 
 	# check at least one directory was specified
 	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
-		echo "$EXE: missing files/directories for hashing"
+		echo "$EXE: missing files/directories for hashing" 1>&2
 		try_help
 		exit 116
 	fi
@@ -216,7 +216,7 @@ function get_all_files() {
 	elif [ -f "$dir" ]; then
 		FILES="$dir"
 	else
-		echo "$dir does not exists or is not a directory."
+		echo "$dir does not exists or is not a directory." 1>&2
 	fi
 }
 
