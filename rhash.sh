@@ -121,7 +121,7 @@ function process_args() {
 	done
 
 	# no output file specified or output file is a dir
-	if [ -z $OUTPUT_FILE ] && [ -f $OUTPUT_FILE] && 
+	if [ -z $OUTPUT_FILE -o -d $OUTPUT_FILE ] && 
 	   [ $FLAG_OUT2STDOUT = false ]; then
 		usage
 		exit 110
