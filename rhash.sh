@@ -102,7 +102,8 @@ function process_args() {
 				exit 102
 				;;
 			*)
-				if [ -z $OUTPUT_FILE ]; then
+				if [ -z $OUTPUT_FILE ] && 
+				   [ $FLAG_OUT2STDOUT = false ]; then
 					OUTPUT_FILE="$opt"
 				else
 					DIRECTORIES+=("$opt")
