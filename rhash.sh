@@ -2,18 +2,19 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=1.2 
-EXE="$(basename $0)"
-DEBUG=false
-HASH_COMMAND=""
-ALGORITHM="md5"
-FILES=""
-DIRECTORIES=()
-OUTPUT_FILE=""
-TOTAL_FILES=0
-FLAG_SORT=true
-FLAG_NO_TAG=false
-FLAG_OUT2STDOUT=false
+VERSION=1.2 # program version
+EXE="$(basename $0)" # program name
+DEBUG=false # debugging mode
+HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
+ALGORITHM="md5" # algorithm used for hashing
+FILES="" # all the files inside a directory
+DIRECTORIES=() # all the specified directories
+OUTPUT_FILE="" # user specified output file
+TOTAL_FILES=0 # total files hashed
+# flags from processing command line arguments
+FLAG_SORT=true # sort output
+FLAG_NO_TAG=false # --tag flag for HASH_COMMAND
+FLAG_OUT2STDOUT=false # output to stdout instead of file
 
 # prints program usage
 function usage() {
