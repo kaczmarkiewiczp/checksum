@@ -62,7 +62,9 @@ function process_args() {
 					"grouped together with other options" 1>&2
 					exit 110
 				fi
+				# append the last option at the back of array
 				args+=("-${opt: -1}")
+				# remove the option from the variable
 				opt="${opt: :-1}"
 			done
 		fi
@@ -88,7 +90,7 @@ function process_args() {
 				FLAG_OUT2STDOUT=true
 				;;
 			--md5|--sha1|--sha224|--sha256|--sha384|--sha512)
-				ALGORITHM=${opt:2}
+				ALGORITHM=${opt:2} # remove leading '--'
 				;;
 			-A)
 				ALGORITHM=""
@@ -96,8 +98,12 @@ function process_args() {
 				continue
 				;;
 			--algorithm=*)
+				# check for --algorithm=OPTION and
+				# --algorithm= OPTION
 				ALGORITHM=$(echo $opt | cut -d '=' -f2)
 				if [ -z $ALGORITHM ]; then
+					# there was space between '=' and option
+					# the next element should be the option
 					expect_a=true;
 					continue
 				elif 	[ $ALGORITHM = "md5" ] || 
@@ -154,8 +160,11 @@ function process_args() {
 
 		if [ $expect_a = true ]; then
 			if [ -z $ALGORITHM ]; then
-				echo "$EXE: missing argument to '-A," \
-				     "--algorithm'" 1>&2
+				echo -n "$EXE: mussing argument to " 1>&2
+				if [ ${args[$i-1]} = "-A" ]; then
+					echo "'-A'" 1>&2
+				else echo "'--algorithm'" 1>&2
+				fi
 				try_help
 				exit 114
 			fi
@@ -208,10 +217,13 @@ function get_all_files() {
 
 	if [ -d "$dir" ]; then
 		FILES=$(find "$dir" -type f)
+		return 0
 	elif [ -f "$dir" ]; then
 		FILES="$dir"
+		return 0
 	else
 		echo "$dir does not exists or is not a directory." 1>&2
+		return 210
 	fi
 }
 
@@ -221,43 +233,48 @@ function output_progress() {
 	file_num="$2"
 	total="$3"
 
-	term_w=$(tput cols)
-	prefix="$file"
-	postfix=" [$file_num of $total]"
+	term_w=$(tput cols) # width of terminal
+	prefix="$file" # filepath part of output
+	postfix=" [$file_num of $total]" # 'n of n' part of output
 	length=$(( ${#prefix} + ${#postfix}))
 
+	# if output is bigger than terminal width we have to shorten it
 	if [ $length -gt $term_w ]; then
+		# calculate available width for 'prefix'
 		aval_w=$(( $term_w - ${#postfix} - 5))
+		# how many characters we need to remove
 		remove=$(( ${#prefix} - $aval_w))
+		# split prefix in half
+		# remove equal amount of chars from both halves
 		first_half="${prefix:0:$((${#prefix} / 2))}"
 		first_half="${first_half::-$(($remove / 2))}"
 
 		second_half="${prefix:$((${#prefix} / 2)):${#prefix}}"
 		second_half="${second_half:$(($remove / 2))}"
 
+		# create new prefix
 		prefix="$first_half...$second_half"
 	fi
 
-	aval_w=$((${#prefix} + ${#postfix}))
-	aval_w=$(($term_w - $aval_w - 1))
+	# calculate available space for padding
+	aval_pad=$((${#prefix} + ${#postfix}))
+	aval_pad=$(($term_w - $aval_pad - 1))
 	
-	if [ $aval_w -gt 1 ]; then
-		padding=$(for ((i=1; i<=$aval_w; i++)); do echo -n " "; done)
+	# create padding
+	if [ $aval_pad -gt 1 ]; then
+		padding=$(for ((i=1; i<=$aval_pad; i++)); do echo -n " "; done)
 	else
 		padding=""
 	fi
 
+	# print output on the same line (overwriting previous line)
 	echo -ne "\r\033[K$prefix$padding$postfix"
 }
 
 # hash files in the array of files
 function rhash() {
-	file_num=1
-	total=$(echo "$FILES" | wc -l)
-
-	if [ -z "$FILES" ]; then
-		return
-	fi
+	file_num=1 # keep track of which file is being hashed
+	total=$(echo "$FILES" | wc -l) # total number o files for the current dir
 
 	((TOTAL_FILES+=$total))
 
@@ -271,7 +288,7 @@ function rhash() {
 			$(echo "HASHED  $file" >> $OUTPUT_FILE)
 		elif [ $FLAG_OUT2STDOUT = true ]; then
 			$HASH_COMMAND "$file"
-		else
+		else # output to stdout
 			$HASH_COMMAND "$file" >> $OUTPUT_FILE
 		fi
 		((file_num++))
@@ -297,6 +314,7 @@ function print_runtime() {
 	fi
 }
 
+# sets everything up and calls appropriate functions
 function main() {
 	start=$(date +%s)
 	process_args "$@"
@@ -304,9 +322,12 @@ function main() {
 	# go through each dir one-by-one
 	for dir in "${DIRECTORIES[@]}"; do
 		get_all_files "$dir"
-		rhash
+		if [ $? -eq 0 ] && [ ! -z "$FILES" ]; then
+			rhash
+		fi
 	done
 
+	# check if we should sort the output
 	if [ $FLAG_SORT = true ] && [ $FLAG_OUT2STDOUT = false ]; then
 		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 	fi
