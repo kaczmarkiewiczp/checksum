@@ -1,6 +1,6 @@
 #!/bin/bash
-# rhash: recursively scan specified directory for files. Create a hash (md5)
-# of all the files and append them to a specified output file
+# rhash: recursively scan specified directory for files. Create a hash of all
+# the files and append them to a specified output file
 
 VERSION=1.2 
 EXE="$(basename $0)"
@@ -19,7 +19,8 @@ FLAG_OUT2STDOUT=false
 function usage() {
 	echo -en "Usage: $EXE [OPTION]... OUTPUT FILE...\n"
 	echo -en "  or:  $EXE [OPTION]... -o FILE...\n"
-	echo -en "Recursively create hashes of files inside supplied directory\n"
+	echo -en "Recursively create hashes of files inside supplied" \
+		 "directory\n"
 	echo -en "Options:\n"
 	echo -en "  -a, --append\t\tappend to output file instead of" \
 		 "overwriting it\n"
@@ -59,7 +60,8 @@ function process_args() {
 			while [ ${#opt} -gt 2 ]; do
 				if [ "${opt: -1}" = 'A' ]; then
 					echo "$EXE: option -A cannot be" \
-					"grouped together with other options" 1>&2
+					"grouped together with other options" \
+					1>&2
 					exit 110
 				fi
 				# append the last option at the back of array
@@ -161,6 +163,8 @@ function process_args() {
 		if [ $expect_a = true ]; then
 			if [ -z $ALGORITHM ]; then
 				echo -n "$EXE: mussing argument to " 1>&2
+				# check previous element in the array
+				# this will tell us if it was -A or long version
 				if [ ${args[$i-1]} = "-A" ]; then
 					echo "'-A'" 1>&2
 				else echo "'--algorithm'" 1>&2
@@ -274,7 +278,7 @@ function output_progress() {
 # hash files in the array of files
 function rhash() {
 	file_num=1 # keep track of which file is being hashed
-	total=$(echo "$FILES" | wc -l) # total number o files for the current dir
+	total=$(echo "$FILES" | wc -l) # total number of files for current dir
 
 	((TOTAL_FILES+=$total))
 
