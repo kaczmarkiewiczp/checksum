@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=1.2 # program version
+VERSION=1.3 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -15,6 +15,7 @@ TOTAL_FILES=0 # total files hashed
 FLAG_SORT=true # sort output
 FLAG_NO_TAG=false # --tag flag for HASH_COMMAND
 FLAG_OUT2STDOUT=false # output to stdout instead of file
+FLAG_QUIET=false # no output (except for -o and stderr)
 
 # prints program usage
 function usage() {
@@ -35,6 +36,8 @@ function usage() {
 		 "behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
+	echo -en "  -q, --quiet\t\tsuppress non-error messages" \
+		 "(excluding -o output)\n"
 	echo -en "  -h, --help\t\tdisplay this message and quit\n"
 	echo -en "      --version\t\tprint version information and exit\n"
 }
@@ -129,8 +132,13 @@ function process_args() {
 			--no-tag)
 				FLAG_NO_TAG=true
 				;;
+			-q|--quiet)
+				FLAG_QUIET=true
+				;;
 			-h|--help)
-				usage
+				if [ $FLAG_QUIET = false ]; then
+					usage
+				fi
 				exit 0
 				;;
 			--version)
@@ -284,7 +292,7 @@ function rhash() {
 	((TOTAL_FILES+=$total))
 
 	while read file; do
-		if [ $FLAG_OUT2STDOUT = false ]; then
+		if [ $FLAG_OUT2STDOUT = false ] && [ $FLAG_QUIET = false ]; then
 			output_progress "$file" $file_num $total
 		fi
 
@@ -298,7 +306,7 @@ function rhash() {
 		fi
 		((file_num++))
 	done <<< "$FILES"
-	if [ $FLAG_OUT2STDOUT = false ]; then 
+	if [ $FLAG_OUT2STDOUT = false ] && [ $FLAG_QUIET = false ]; then 
 		echo ""
 	fi
 }
@@ -339,7 +347,7 @@ function main() {
 
 	end=$(date +%s)
 	runtime=$(($end - $start))
-	if [ $FLAG_OUT2STDOUT = false ]; then
+	if [ $FLAG_OUT2STDOUT = false ] && [ $FLAG_QUIET = false ]; then
 		echo -n "Hashed $TOTAL_FILES files in "
 		print_runtime $runtime
 	fi
