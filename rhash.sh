@@ -8,7 +8,7 @@ DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="md5" # algorithm used for hashing
 FILES="" # all the files inside a directory
-DIRECTORIES=() # all the specified directories
+INPUT_FILES=() # all the specified directories
 OUTPUT_FILE="" # user specified output file
 TOTAL_FILES=0 # total files hashed
 # flags from processing command line arguments
@@ -181,7 +181,7 @@ function process_args() {
 	# if output to stdout, check that at least one file specified
 	if [ $FLAG_OUT2STDOUT = true ]; then
 		if [ ${#files[@]} -ge 1 ]; then
-			DIRECTORIES=("${files[@]}")
+			INPUT_FILES=("${files[@]}")
 		else
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
@@ -191,7 +191,7 @@ function process_args() {
 		# check that at least two files (output and input)
 		if [ ${#files[@]} -ge 2 ] && [ ! -d "${files[0]}" ]; then
 			OUTPUT_FILE="${files[0]}"
-			DIRECTORIES=("${files[@]:1}")
+			INPUT_FILES=("${files[@]:1}")
 		elif [ -d "${files[0]}" ]; then
 			echo "$EXE: missing output file" 1>&2
 			try_help
@@ -329,7 +329,7 @@ function main() {
 	process_args "$@"
 	create_hash_command
 	# go through each dir one-by-one
-	for dir in "${DIRECTORIES[@]}"; do
+	for dir in "${INPUT_FILES[@]}"; do
 		get_all_files "$dir"
 		if [ $? -eq 0 ] && [ ! -z "$FILES" ]; then
 			rhash
