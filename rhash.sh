@@ -49,9 +49,9 @@ function try_help() {
 
 # process arguments
 function process_args() {
+	files=() # all non-flag arguments (output and input files)
 	append_output=false
 	expect_a=false
-	flag_count=0
 
 	args=("$@") # put arguments into array
 
@@ -83,11 +83,9 @@ function process_args() {
 		case $opt in
 			-a|--append)
 				append_output=true
-				((flag_count++))
 				;;
 			-s|--sort-output)
 				FLAG_SORT=true
-				((flag_count++))
 				;;
 			-S|--no-sort)
 				FLAG_SORT=false
@@ -160,12 +158,7 @@ function process_args() {
 				fi
 				;;
 			*)
-				if [ -z $OUTPUT_FILE ] && 
-				   [ $FLAG_OUT2STDOUT = false ]; then
-					OUTPUT_FILE="$opt"
-				else
-					DIRECTORIES+=("$opt")
-				fi
+				files+=("$opt")
 				;;
 		esac
 
@@ -185,31 +178,34 @@ function process_args() {
 		fi
 	done
 
-	# no output file specified or output file is a dir
-	if [ -z $OUTPUT_FILE -o -d $OUTPUT_FILE ] && 
-	   [ $FLAG_OUT2STDOUT = false ]; then
-		echo "$EXE: missing output file" 1>&2
-		try_help
-		exit 115
-	fi
+	# if output to stdout, check that at least one file specified
+	if [ $FLAG_OUT2STDOUT = true ]; then
+		if [ ${#files[@]} -ge 1 ]; then
+			DIRECTORIES=("${files[@]}")
+		else
+			echo "$EXE: missing files/directories" 1>&2
+			try_help
+			exit 115
+		fi
+	else # output to file
+		# check that at least two files (output and input)
+		if [ ${#files[@]} -ge 2 ] && [ ! -d "${files[0]}" ]; then
+			OUTPUT_FILE="${files[0]}"
+			DIRECTORIES=("${files[@]:1}")
+		elif [ -d "${files[0]}" ]; then
+			echo "$EXE: missing output file" 1>&2
+			try_help
+			exit 116
+		else
+			echo "$EXE: missing files/directories" 1>&2
+			try_help
+			exit 117
+		fi
 
-	# output to stdout; our output file is part of directories to hash
-	if [ $FLAG_OUT2STDOUT = true ] && [ ! -z $OUTPUT_FILE ]; then
-		DIRECTORIES+=("$OUTPUT_FILE")
-		OUTPUT_FILE=""
-	fi
-
-	# check at least one directory was specified
-	if [ ${#DIRECTORIES[@]} -eq 0 ]; then
-		echo "$EXE: missing files/directories for hashing" 1>&2
-		try_help
-		exit 116
-	fi
-
-	# clear file if it doesn't exists and append flag is not specified
-	if [ $FLAG_OUT2STDOUT = false ] && [ $append_output = false ] && 
-	   [ -e $OUTPUT_FILE ]; then
-		> $OUTPUT_FILE
+		# clear file if it exists and append flag is not specified
+		if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
+			> $OUTPUT_FILE
+		fi
 	fi
 }
 
