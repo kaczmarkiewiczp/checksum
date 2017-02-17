@@ -2,6 +2,15 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
+# TODO (4): --check flag (and code) for recursively checking hashes
+# TODO (5): progress for --check => 
+#		FILE: a of b  OK: c  FAILED: d  MISSING: e ERROR: f
+# TODO (6): summary output for --check
+# TODO (7): --detect-algorithm flag (and code)
+# md5 (32)	sha1 (40)	sha224 (56)	sha256 (64)	sha384 (96)
+# sha512 (128)
+
+
 VERSION=1.3 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
@@ -16,34 +25,53 @@ FLAG_SORT=true # sort output
 FLAG_NO_TAG=false # --tag flag for HASH_COMMAND
 FLAG_OUT2STDOUT=false # output to stdout instead of file
 FLAG_QUIET=false # no output (except for -o and stderr)
+FLAG_PROGRESS=true # display progress during hahing
+FLAG_SUMMARY=true # print summary at the end
 
 # prints program usage
 function usage() {
+	if [ $FLAG_QUIET = true ]; then
+		return
+	fi
+
 	echo -en "Usage: $EXE [OPTION]... OUTPUT FILE...\n"
 	echo -en "  or:  $EXE [OPTION]... -o FILE...\n"
-	echo -en "Recursively create hashes of files inside supplied" \
+	echo -en "  or:  $EXE [OPTION]... -c FILE...\n"
+
+	echo -en "Recursively create or check hashes of files inside supplied" \
 		 "directory\n"
-	echo -en "Options:\n"
-	echo -en "  -a, --append\t\tappend to output file instead of" \
-		 "overwriting it\n"
+
+	echo -en "Options useful when creating and veryfying checksums:\n"
 	echo -en "  -A ALGORITHM,  --ALGORITHM,  --algorithm=ALGORITHM"
 	echo -en "   use specified algorithm\n"
 	echo -en "\t\t\tThe following options are available:\n"
 	echo -en "\t\t\t    md5 (default)\n\t\t\t    sha1\n\t\t\t    sha224\n "
 	echo -en "\t\t\t    sha256\n\t\t\t    sha384\n\t\t\t    sha512\n"
+	echo -en "      --no-summary\tdon't display summary at the end\n"
+	echo -en "  -P, --no-progress\tdon't display progress\n"
+	echo -en "  -q, --quiet\t\tsuppress non-error messages" \
+		 "(excluding -o output)\n"
+	echo -en "  -h, --help\t\tdisplay this message and quit\n"
+	echo -en "      --version\t\tprint version information and exit\n"
+
+	echo -en "\nOptions useful only when creating checksums:\n"
+	echo -en "  -a, --append\t\tappend to output file instead of" \
+		 "overwriting it\n"
 	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
 	echo -en "  -s, --sort-output\tsort the output file (default " \
 		 "behaviour)\n"
 	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
-	echo -en "  -q, --quiet\t\tsuppress non-error messages" \
-		 "(excluding -o output)\n"
-	echo -en "  -h, --help\t\tdisplay this message and quit\n"
-	echo -en "      --version\t\tprint version information and exit\n"
+
+	echo -en "\nOptions useful only when veryfying checksums:\n"
 }
 
 # output message for getting help
 function try_help() {
+	if [ $FLAG_QUIET = true]; then
+		return
+	fi
+
 	echo "Try '$EXE --help' for more information" 1>&2
 }
 
@@ -52,6 +80,10 @@ function process_args() {
 	files=() # all non-flag arguments (output and input files)
 	append_output=false
 	expect_a=false
+
+	# for checking invalid combination of flags
+	flag_group_a=false
+	flag_group_b=false
 
 	args=("$@") # put arguments into array
 
@@ -83,15 +115,19 @@ function process_args() {
 		case $opt in
 			-a|--append)
 				append_output=true
+				flag_group_a=true
 				;;
 			-s|--sort-output)
 				FLAG_SORT=true
+				flag_group_a=true
 				;;
 			-S|--no-sort)
 				FLAG_SORT=false
+				flag_group_a=true
 				;;
 			-o|--out2stdout)
 				FLAG_OUT2STDOUT=true
+				flag_group_b=true
 				;;
 			--md5|--sha1|--sha224|--sha256|--sha384|--sha512)
 				ALGORITHM=${opt:2} # remove leading '--'
@@ -129,6 +165,13 @@ function process_args() {
 				;;
 			--no-tag)
 				FLAG_NO_TAG=true
+				;;
+			--no-summary)
+				FLAG_SUMMARY=false
+				;;
+			-P|--no-progress)
+				FLAG_PROGRESS=false
+				flag_group_a=true
 				;;
 			-q|--quiet)
 				FLAG_QUIET=true
@@ -178,6 +221,12 @@ function process_args() {
 		fi
 	done
 
+	if [ $flag_group_a = true ] && [ $flag_group_b = true ]; then
+		echo "$EXE: invalid combination of option" 1>&2
+		try_help
+		exit 115
+	fi
+
 	# if output to stdout, check that at least one file specified
 	if [ $FLAG_OUT2STDOUT = true ]; then
 		if [ ${#files[@]} -ge 1 ]; then
@@ -185,7 +234,7 @@ function process_args() {
 		else
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
-			exit 115
+			exit 116
 		fi
 	else # output to file
 		# check that at least two files (output and input)
@@ -195,11 +244,11 @@ function process_args() {
 		elif [ -d "${files[0]}" ]; then
 			echo "$EXE: missing output file" 1>&2
 			try_help
-			exit 116
+			exit 117
 		else
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
-			exit 117
+			exit 118
 		fi
 
 		# clear file if it exists and append flag is not specified
@@ -288,7 +337,8 @@ function rhash() {
 	((TOTAL_FILES+=$total))
 
 	while read file; do
-		if [ $FLAG_OUT2STDOUT = false ] && [ $FLAG_QUIET = false ]; then
+		if [ $FLAG_OUT2STDOUT = false ] && 
+		   [ $FLAG_QUIET = false -a $FLAG_PROGRESS = true ]; then
 			output_progress "$file" $file_num $total
 		fi
 
@@ -302,7 +352,8 @@ function rhash() {
 		fi
 		((file_num++))
 	done <<< "$FILES"
-	if [ $FLAG_OUT2STDOUT = false ] && [ $FLAG_QUIET = false ]; then 
+	if [ $FLAG_OUT2STDOUT = false ] && 
+	   [ $FLAG_QUIET = false -a $FLAG_PROGRESS = true ]; then 
 		echo ""
 	fi
 }
@@ -338,12 +389,13 @@ function main() {
 
 	# check if we should sort the output
 	if [ $FLAG_SORT = true ] && [ $FLAG_OUT2STDOUT = false ]; then
-		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
+		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE" 2>/dev/null
 	fi
 
 	end=$(date +%s)
 	runtime=$(($end - $start))
-	if [ $FLAG_OUT2STDOUT = false ] && [ $FLAG_QUIET = false ]; then
+	if [ $FLAG_OUT2STDOUT = false ] && 
+	   [ $FLAG_QUIET = false -a $FLAG_SUMMARY = true ]; then
 		echo -n "Hashed $TOTAL_FILES files in "
 		print_runtime $runtime
 	fi
