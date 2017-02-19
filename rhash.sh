@@ -14,6 +14,7 @@ TOTAL_FILES=0 # total files hashed
 
 # flags from processing command line arguments
 FLAG_SORT=true # sort output
+FLAG_APPEND=false # whether to append to output or overwrite it
 FLAG_NO_TAG=false # --tag flag for HASH_COMMAND
 FLAG_OUT2STDOUT=false # output to stdout instead of file
 FLAG_QUIET=false # no output (except for -o and stderr)
@@ -54,9 +55,8 @@ function usage() {
 	echo -en "  -a, --append\t\tappend to output file instead of" \
 		 "overwriting it\n"
 	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
-	echo -en "  -s, --sort-output\tsort the output file (default " \
-		 "behaviour)\n"
-	echo -en "  -S, --no-sort\t\tdon't sort the output file\n"
+	echo -en "      --no-sort\t\tdon't sort output file (default" \
+		 " behavior is to sort)\n"
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when veryfying checksums:\n"
@@ -76,10 +76,72 @@ function try_help() {
 	echo "Try '$EXE --help' for more information" 1>&2
 }
 
+# check for invalid combination of flags
+function check_flags() {
+	if [ $FLAG_DETECT_ALG = true -o $FLAG_IGNORE_MISS = true -o \
+		$FLAG_IGNORE_ERR = true ] && [ $FLAG_CHECK = false ]; then
+		echo -n "$EXE the " 1>&2
+		if [ $FLAG_DETECT_ALG = true ]; then
+			echo -n "--detect-algorithm " 1>&2
+		elif [ $FLAG_IGNORE_MISS = true ]; then
+			echo -n "--ignore-missing " 1>&2
+		elif [ $FLAG_IGNORE_ERR = true ]; then
+			echo -n "--ignore-errors " 1>&2
+		fi
+		echo "options is meaningful only when verifying checksums" 1>&2
+		try_help
+		exit 110
+	fi
+
+	if [ $FLAG_CHECK = true ]; then
+		if [ $FLAG_APPEND = true ]; then
+			echo "$EXE: the --append option is meaningless when" \
+			     "verifying checksums" 1>&2
+			try_help
+			exit 111
+		elif [ $FLAG_OUT2STDOUT = true ]; then
+			echo "$EXE: the --out2stdout option is meaningless" \
+			     "when verifying checksums" 1>&2
+			try_help
+			exit 112
+		elif [ $FLAG_SORT = false ]; then
+			echo "$EXE: the --no-sort option is meaningless when" \
+			     "verifying checksums" 1>&2
+			try_help
+			exit 113
+		elif [ $FLAG_NO_TAG = true ]; then
+			echo "$EXE: the --tag option is meaningless when" \
+			     "verifying checksums" 1>&2
+			try_help
+			exit 114
+		fi
+	fi
+
+	if [ $FLAG_APPEND = true ] && [ $FLAG_OUT2STDOUT = true ]; then
+		echo "$EXE: the --append option is meaningless when printing" \
+		     "to stdout" 1>&2
+		try_help
+		exit 115
+	fi
+
+	if [ ! -z $ALGORITHM ] && [ $FLAG_DETECT_ALG = true ]; then
+		echo "$EXE: the --detect-algorithm option is meaningless" \
+			"when an algorithm has been specified" 1>&2
+		try_help
+		exit 116
+	fi
+
+	if [ $FLAG_OUT2STDOUT = true ] && [ $FLAG_SORT = false ]; then
+		echo "$EXE: the --no-sort option is meaningless when printing" \
+			"to stdout" 1>&2
+		try_help
+		exit 117
+	fi
+}
+
 # process arguments
 function process_args() {
 	files=() # all non-flag arguments (output and input files)
-	append_output=false
 	expect_a=false
 
 	args=("$@") # put arguments into array
@@ -95,7 +157,7 @@ function process_args() {
 					echo "$EXE: option -A cannot be" \
 					"grouped together with other options" \
 					1>&2
-					exit 110
+					exit 100
 				fi
 				# append the last option at the back of array
 				args+=("-${opt: -1}")
@@ -111,15 +173,12 @@ function process_args() {
 
 		case $opt in
 			-a|--append)
-				append_output=true
+				FLAG_APPEND=true
 				;;
 			-c|--check)
 				FLAG_CHECK=true
 				;;
-			-s|--sort-output)
-				FLAG_SORT=true
-				;;
-			-S|--no-sort)
+			--no-sort)
 				FLAG_SORT=false
 				;;
 			-o|--out2stdout)
@@ -151,12 +210,12 @@ function process_args() {
 					echo "$EXE: missing argument to" \
 					     "'--algorithm'" 1>&2
 					try_help
-					exit 111
+					exit 101
 				else
 					echo "$EXE: unknown argument to" \
 					     "--algorithm: '$ALGORITHM'" 1>&2
 					try_help
-					exit 112
+					exit 102
 				fi
 				;;
 			--no-tag)
@@ -201,7 +260,7 @@ function process_args() {
 						echo "'${opt:1}'" 1>&2
 					fi
 					try_help
-					exit 113
+					exit 103
 				fi
 				;;
 			*)
@@ -219,13 +278,13 @@ function process_args() {
 				else echo "'--algorithm'" 1>&2
 				fi
 				try_help
-				exit 114
+				exit 104
 			fi
 			expect_a=false
 		fi
 	done
 
-	# TODO check if correct flag combination
+	check_flags
 
 	# if output to stdout or checking file,
 	# check that at least one file specified
@@ -235,11 +294,11 @@ function process_args() {
 		elif [ $FLAG_OUT2STDOUT = true ]; then
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
-			exit 116
+			exit 105
 		else
 			echo "$EXE: missing files" 1>&2
 			try_help
-			exit 117
+			exit 106
 		fi
 	else # output to file
 		# check that at least two files (output and input)
@@ -249,15 +308,15 @@ function process_args() {
 		elif [ -d "${files[0]}" ]; then
 			echo "$EXE: missing output file" 1>&2
 			try_help
-			exit 117
+			exit 107
 		else
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
-			exit 118
+			exit 108
 		fi
 
 		# clear file if it exists and append flag is not specified
-		if [ $append_output = false ] && [ -e $OUTPUT_FILE ]; then
+		if [ $FLAG_APPEND = false ] && [ -e $OUTPUT_FILE ]; then
 			> $OUTPUT_FILE
 		fi
 	fi
