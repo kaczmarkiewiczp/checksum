@@ -2,24 +2,16 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-# TODO (4): --check flag (and code) for recursively checking hashes
-# TODO (5): progress for --check => 
-#		FILE: a of b  OK: c  FAILED: d  MISSING: e ERROR: f
-# TODO (6): summary output for --check
-# TODO (7): --detect-algorithm flag (and code)
-# md5 (32)	sha1 (40)	sha224 (56)	sha256 (64)	sha384 (96)
-# sha512 (128)
-
-
-VERSION=1.3 # program version
+VERSION=2.0.0 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
-ALGORITHM="md5" # algorithm used for hashing
+ALGORITHM="" # algorithm used for hashing
 FILES="" # all the files inside a directory
 INPUT_FILES=() # all the specified directories
 OUTPUT_FILE="" # user specified output file
 TOTAL_FILES=0 # total files hashed
+
 # flags from processing command line arguments
 FLAG_SORT=true # sort output
 FLAG_NO_TAG=false # --tag flag for HASH_COMMAND
@@ -27,6 +19,10 @@ FLAG_OUT2STDOUT=false # output to stdout instead of file
 FLAG_QUIET=false # no output (except for -o and stderr)
 FLAG_PROGRESS=true # display progress during hahing
 FLAG_SUMMARY=true # print summary at the end
+FLAG_CHECK=false # check checksums inside file(s)
+FLAG_DETECT_ALG=false # try to detect algorithm for checking
+FLAG_IGNORE_MISS=false # ignore missing files when checking
+FLAG_IGNORE_ERR=false # ignore improperly formatted lines
 
 # prints program usage
 function usage() {
@@ -64,11 +60,17 @@ function usage() {
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when veryfying checksums:\n"
+	echo -en "  -c, --check\tread checksums from FILEs and check them\n"
+	echo -en "      --detect-algorithm\ttry to detect algorithm used\n"
+	echo -en "      --ignore-missing\tdon't fail or report status for" \
+		 "missing files\n"
+	# TODO implement
+	echo -en "      --ignore-errors\tignore improperly formatted lines\n"
 }
 
 # output message for getting help
 function try_help() {
-	if [ $FLAG_QUIET = true]; then
+	if [ $FLAG_QUIET = true ]; then
 		return
 	fi
 
@@ -80,10 +82,6 @@ function process_args() {
 	files=() # all non-flag arguments (output and input files)
 	append_output=false
 	expect_a=false
-
-	# for checking invalid combination of flags
-	flag_group_a=false
-	flag_group_b=false
 
 	args=("$@") # put arguments into array
 
@@ -115,19 +113,18 @@ function process_args() {
 		case $opt in
 			-a|--append)
 				append_output=true
-				flag_group_a=true
+				;;
+			-c|--check)
+				FLAG_CHECK=true
 				;;
 			-s|--sort-output)
 				FLAG_SORT=true
-				flag_group_a=true
 				;;
 			-S|--no-sort)
 				FLAG_SORT=false
-				flag_group_a=true
 				;;
 			-o|--out2stdout)
 				FLAG_OUT2STDOUT=true
-				flag_group_b=true
 				;;
 			--md5|--sha1|--sha224|--sha256|--sha384|--sha512)
 				ALGORITHM=${opt:2} # remove leading '--'
@@ -171,7 +168,12 @@ function process_args() {
 				;;
 			-P|--no-progress)
 				FLAG_PROGRESS=false
-				flag_group_a=true
+				;;
+			--detect-algorithm)
+				FLAG_DETECT_ALG=true
+				;;
+			--ignore-missing)
+				FLAG_IGNORE_MISS=true
 				;;
 			-q|--quiet)
 				FLAG_QUIET=true
@@ -221,20 +223,21 @@ function process_args() {
 		fi
 	done
 
-	if [ $flag_group_a = true ] && [ $flag_group_b = true ]; then
-		echo "$EXE: invalid combination of option" 1>&2
-		try_help
-		exit 115
-	fi
+	# TODO check if correct flag combination
 
-	# if output to stdout, check that at least one file specified
-	if [ $FLAG_OUT2STDOUT = true ]; then
+	# if output to stdout or checking file,
+	# check that at least one file specified
+	if [ $FLAG_OUT2STDOUT = true -o $FLAG_CHECK = true ]; then
 		if [ ${#files[@]} -ge 1 ]; then
 			INPUT_FILES=("${files[@]}")
-		else
+		elif [ $FLAG_OUT2STDOUT = true ]; then
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
 			exit 116
+		else
+			echo "$EXE: missing files" 1>&2
+			try_help
+			exit 117
 		fi
 	else # output to file
 		# check that at least two files (output and input)
@@ -256,7 +259,16 @@ function process_args() {
 			> $OUTPUT_FILE
 		fi
 	fi
+
+	# set default algorithm if not set
+	if [ -z $ALGORITHM ] && [ $FLAG_CHECK = false ]; then
+		ALGORITHM="md5"
+	fi
 }
+
+################################################################################
+# Functions solely used when creating checksums
+################################################################################
 
 # creates appropriate hash command
 function create_hash_command() {
@@ -280,13 +292,13 @@ function get_all_files() {
 		FILES="$dir"
 		return 0
 	else
-		echo "$dir does not exists or is not a directory." 1>&2
+		echo "$EXE: '$dir' does not exists" 1>&2
 		return 210
 	fi
 }
 
 # outputs progress of files processed
-function output_progress() {
+function print_hash_progress() {
 	file="$1"
 	file_num="$2"
 	total="$3"
@@ -329,6 +341,23 @@ function output_progress() {
 	echo -ne "\r\033[K$prefix$padding$postfix"
 }
 
+# print summary of created checksum
+function print_hash_summary() {
+	echo -n "Hashed $TOTAL_FILES files in "
+	if [ $1 -lt 60 ]; then
+		runtime=$(date -u -d @${1} +"%S")
+		echo "$runtime seconds"
+	elif [ $1 -ge 60 ] && [ $1 -lt 3600 ]; then
+		runtime=$(date -u -d @${1} +"%M:%S")
+		echo "$runtime minutes"
+	elif [ $1 -ge 3600 ] && [ $1 -lt 86400 ]; then
+		runtime=$(date -u -d @${1} +"%T")
+		echo "$runtime hours"
+	else
+		echo "more than a day"
+	fi
+}
+
 # hash files in the array of files
 function rhash() {
 	file_num=1 # keep track of which file is being hashed
@@ -339,7 +368,7 @@ function rhash() {
 	while read file; do
 		if [ $FLAG_OUT2STDOUT = false ] && 
 		   [ $FLAG_QUIET = false -a $FLAG_PROGRESS = true ]; then
-			output_progress "$file" $file_num $total
+			print_hash_progress "$file" $file_num $total
 		fi
 
 		if [ $DEBUG = true ]; then
@@ -358,26 +387,236 @@ function rhash() {
 	fi
 }
 
-# prints execution time
-function print_runtime() {
-	if [ $1 -lt 60 ]; then
-		runtime=$(date -u -d @${1} +"%S")
-		echo "$runtime seconds"
-	elif [ $1 -ge 60 ] && [ $1 -lt 3600 ]; then
-		runtime=$(date -u -d @${1} +"%M:%S")
-		echo "$runtime minutes"
-	elif [ $1 -ge 3600 ] && [ $1 -lt 86400 ]; then
-		runtime=$(date -u -d @${1} +"%T")
-		echo "$runtime hours"
-	else
-		echo "more than a day"
+################################################################################
+# Functions solely used when doing a checksum checks/comparisons
+################################################################################
+
+function create_check_command() {
+	case "$1" in
+		MD5)
+			HASH_COMMAND="md5sum "
+			;;
+		SHA1)
+			HASH_COMMAND="sha1sum "
+			;;
+		SHA224)
+			HASH_COMMAND="sha224sum "
+			;;
+		SHA256)
+			HASH_COMMAND="sha256sum "
+			;;
+		SHA384)
+			HASH_COMMAND="sha384sum "
+			;;
+		SHA512)
+			HASH_COMMAND="sha512sum "
+			;;
+		*)
+			HASH_COMMAND=""
+			return
+			;;
+	esac
+
+	HASH_COMMAND+="--check --ignore-missing --quiet --status -"
+}
+
+# try and detect algorithm based on hash length
+function detect_algorithm() {
+	case ${#1} in
+		32)
+			create_check_command "MD5"
+			;;
+		40)
+			create_check_command "SHA1"
+			;;
+		56)
+			create_check_command "SHA224"
+			;;
+		64)
+			create_check_command "SHA256"
+			;;
+		96)
+			create_check_command "SHA384"
+			;;
+		128)
+			create_check_command "SHA512"
+			;;
+		*)
+			HASH_COMMAND=""
+			;;
+	esac
+}
+
+# outputs progress during hash checking
+function print_check_progress() {
+	file_num=$1
+	total_num=$2
+	ok=$3
+	failed=$4
+	missing=$5
+	error=$6
+
+	progress="FILE: $file_num of $total_num"
+	progress+="   OK: $ok"
+	progress+="   FAILED: $failed"
+	if [ $FLAG_IGNORE_MISS = false ]; then
+		progress+="   MISSING: $missing"
+	fi
+	if [ $FLAG_IGNORE_ERR = false ]; then
+		progress+="   ERROR: $error"
+	fi
+
+	echo -ne "\r\033[K$progress"
+}
+
+# output summary of check
+function print_check_summary() {
+	passed_num=$1
+	error_num=$2
+	failed_files=(${!3})
+	missing_files=(${!4})
+	failed_num=${#failed_files[@]}
+	missing_num=${#missing_files[@]}
+
+	echo -n "PASSED: $passed_num"
+	echo -n "   FAILED: $failed_num"
+	if [ $FLAG_IGNORE_MISS = false ]; then
+		echo -n "   MISSING: $missing_num"
+	fi
+	if [ $FLAG_IGNORE_ERR = false ]; then
+		echo -n "   ERRORED: $error_num"
+	fi
+	echo
+
+	for i in "${failed_files[@]}"; do echo "[FAILED]  $i"; done
+
+	if [ $FLAG_IGNORE_MISS = false ]; then
+		for i in "${failed_files[@]}"; do echo "[MISSING]  $i"; done
 	fi
 }
+
+function check() {
+	regex_tag="^(MD5|SHA1|SHA224|SHA256|SHA384|SHA512)[[:space:]]\(.+\)"
+	regex_tag+="[[:space:]]=[[:space:]]([a-f]|[A-F]|[0-9])+$"
+
+	regex_no_tag="^[[:alnum:]]+[[:space:]]([a-f]|[A-F]|[0-9])+$"
+
+	total_num=$(wc -l "$1")
+	file_num=0
+	ok_num=0
+	error_num=0
+	failed_files=()
+	missing_files=()
+
+	while read line; do
+		((file_num++))
+
+		if [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
+			print_check_progress $file_num $total_num $ok_num \
+					     ${#failed_files[@]} \
+					     ${#missing_files[@]} $error_num
+		fi
+
+		if [[ "$line" =~ $regex_tag ]]; then
+			algorithm=$(echo "$line" | cut -d' ' -f1)
+			file=$(echo "$line" | cut -d' ' -f2)
+			file=${file:1}
+			file=${file: :-1}
+			create_check_command $algorithm
+
+		elif [[ "$line" =~ $regex_no_tag ]]; then
+			checksum=$(echo "$line" | cut -d' ' -f1)
+			file=${line/  /.}
+			file=$(echo $file | cut -d'.' -f2)
+
+			if [ ! -z $ALGORITHM ]; then
+				create_check_command $ALGORITHM
+			elif [ $FLAG_DETECT_ALG = true ]; then
+				detect_algorithm $checksum
+			else
+				((error_num++))
+				continue
+			fi
+		else
+			((error_num++))
+			continue
+		fi
+
+		if [ -z "$HASH_COMMAND" ]; then
+			((error_num++))
+			continue
+		fi
+
+		if [ ! -f "$file" ]; then
+			missing_files+=("$file")
+			continue
+		fi
+
+		$(echo "$line" | $HASH_COMMAND)
+		if [ $? -eq 0 ]; then
+			((ok_num++))
+		else
+			failed_files+=("$file")
+		fi
+	done < "$1"
+
+	if [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
+		echo
+	fi
+
+	if [ $FLAG_QUIET = true -o $FLAG_SUMMARY = false ]; then
+		return
+	fi
+	print_check_summary $ok_num $error_num failed_files[@] missing_files[@]
+
+	if [ ${#failed_files[@]} -gt 0 ]; then
+		return 200
+	elif [ ${#missing_files[@]} -gt 0 ]; then
+		return 201
+	elif [ $error_num -gt 0 ]; then
+		return 202
+	else
+		return 0
+	fi
+}
+
+################################################################################
+# Main
+################################################################################
 
 # sets everything up and calls appropriate functions
 function main() {
 	start=$(date +%s)
 	process_args "$@"
+
+	if [ $FLAG_CHECK = true ]; then
+		exit_status=0
+
+		for file in "${INPUT_FILES[@]}"; do
+			if [ -f "$file" ]; then
+				check "$file"
+
+				return_val=$?
+				case $return_val in
+					200)
+						;& # fall-through
+					201)
+						;& # fall-through
+					202)
+						if [ $exit_status -gt 0 ]; then
+							exit_status=203
+						else
+							exit_status=$return_val
+						fi
+						;;
+				esac
+			else
+				echo "$EXE: '$file' does not exists" 1>&2
+			fi
+		done
+		exit $exit_status
+	fi
+
 	create_hash_command
 	# go through each dir one-by-one
 	for dir in "${INPUT_FILES[@]}"; do
@@ -396,8 +635,7 @@ function main() {
 	runtime=$(($end - $start))
 	if [ $FLAG_OUT2STDOUT = false ] && 
 	   [ $FLAG_QUIET = false -a $FLAG_SUMMARY = true ]; then
-		echo -n "Hashed $TOTAL_FILES files in "
-		print_runtime $runtime
+		print_hash_summary $runtime
 	fi
 }
 
