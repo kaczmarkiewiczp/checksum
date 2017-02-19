@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.3 # program version
+VERSION=2.0.4 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -497,17 +497,18 @@ function print_check_summary() {
 }
 
 function check() {
+	# regex for detecting checksums
 	regex_tag="^(MD5|SHA1|SHA224|SHA256|SHA384|SHA512)[[:space:]]\(.+\)"
 	regex_tag+="[[:space:]]=[[:space:]]([a-f]|[A-F]|[0-9])+$"
 
 	regex_no_tag="^([a-f]|[A-F]|[0-9])+[[:space:]].+$"
 
-	total_num=$(wc -l "$1")
-	file_num=0
-	ok_num=0
-	error_num=0
-	failed_files=()
-	missing_files=()
+	total_num=$(wc -l "$1") # total number of lines/files scanned
+	file_num=0 # current file scanned (for progress output)
+	ok_num=0 # files passed
+	error_num=0 # lines with errors
+	failed_files=() # checksum check failed
+	missing_files=() # missing files
 
 	while read line; do
 		((file_num++))
@@ -520,11 +521,12 @@ function check() {
 
 		if [[ "$line" =~ $regex_tag ]]; then
 			algorithm=$(echo "$line" | cut -d' ' -f1)
-			file=$(echo "$line" | cut -d' ' -f2)
+			# extract file path
+			file=${line/ /.}
+			file=$(echo "$file" | cut -d'.' -f2)
+			file=$(echo "$file" | cut -d')' -f1)
 			file=${file:1}
-			file=${file: :-1}
 			create_check_command $algorithm
-
 		elif [[ "$line" =~ $regex_no_tag ]]; then
 			checksum=$(echo "$line" | cut -d' ' -f1)
 			file=${line/  /.}
@@ -571,6 +573,7 @@ function check() {
 				    missing_files[@]
 	fi
 
+	# return appropriate exit code
 	if [ ${#failed_files[@]} -gt 0 ]; then
 		return 200
 	elif [ ${#missing_files[@]} -gt 0 ]; then
