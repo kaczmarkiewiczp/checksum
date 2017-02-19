@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.1 # program version
+VERSION=2.0.2 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -500,7 +500,7 @@ function check() {
 	regex_tag="^(MD5|SHA1|SHA224|SHA256|SHA384|SHA512)[[:space:]]\(.+\)"
 	regex_tag+="[[:space:]]=[[:space:]]([a-f]|[A-F]|[0-9])+$"
 
-	regex_no_tag="^[[:alnum:]]+[[:space:]]([a-f]|[A-F]|[0-9])+$"
+	regex_no_tag="^([a-f]|[A-F]|[0-9])+[[:space:]].+$"
 
 	total_num=$(wc -l "$1")
 	file_num=0
