@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.2 # program version
+VERSION=2.0.3 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -393,22 +393,22 @@ function rhash() {
 
 function create_check_command() {
 	case "$1" in
-		MD5)
+		MD5|md5)
 			HASH_COMMAND="md5sum "
 			;;
-		SHA1)
+		SHA1|sha1)
 			HASH_COMMAND="sha1sum "
 			;;
-		SHA224)
+		SHA224|sha224)
 			HASH_COMMAND="sha224sum "
 			;;
-		SHA256)
+		SHA256|sha256)
 			HASH_COMMAND="sha256sum "
 			;;
-		SHA384)
+		SHA384|sha384)
 			HASH_COMMAND="sha384sum "
 			;;
-		SHA512)
+		SHA512|sha512)
 			HASH_COMMAND="sha512sum "
 			;;
 		*)
@@ -492,7 +492,7 @@ function print_check_summary() {
 	for i in "${failed_files[@]}"; do echo "[FAILED]  $i"; done
 
 	if [ $FLAG_IGNORE_MISS = false ]; then
-		for i in "${failed_files[@]}"; do echo "[MISSING]  $i"; done
+		for i in "${missing_files[@]}"; do echo "[MISSING]  $i"; done
 	fi
 }
 
@@ -553,7 +553,7 @@ function check() {
 			continue
 		fi
 
-		$(echo "$line" | $HASH_COMMAND)
+		$(echo "$line" | $HASH_COMMAND 2>/dev/null)
 		if [ $? -eq 0 ]; then
 			((ok_num++))
 		else
