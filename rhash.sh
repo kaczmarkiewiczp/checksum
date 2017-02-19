@@ -4,7 +4,6 @@
 
 VERSION=2.0.9 # program version
 EXE="$(basename $0)" # program name
-DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
 FILES="" # all the files inside a directory
@@ -432,10 +431,7 @@ function rhash() {
 			print_hash_progress "$file" $file_num $total
 		fi
 
-		if [ $DEBUG = true ]; then
-			sleep 0.05
-			$(echo "HASHED  $file" >> $OUTPUT_FILE)
-		elif [ $FLAG_OUT2STDOUT = true ]; then
+		if [ $FLAG_OUT2STDOUT = true ]; then
 			$HASH_COMMAND "$file"
 		else # output to stdout
 			$HASH_COMMAND "$file" >> $OUTPUT_FILE
