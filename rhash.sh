@@ -571,14 +571,14 @@ function check() {
 		fi
 	done < "$1"
 
-	if [ $FLAG_PROGRESS = true ] && [ $FLAG_SUMMARY = false ] && 
-	   [ $FLAG_QUIET = false ]; then
-		echo
-	fi
-
 	if [ $FLAG_QUIET = false -a $FLAG_SUMMARY = true ]; then
 		print_check_summary $ok_num $error_num "failed_files[@]" \
 				    "missing_files[@]"
+	elif [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
+		print_check_progress "$file_num" "$total_num" \
+				     "$ok_num" "${#failed_files[@]}" \
+				     "${#missing_files[@]}" "$error_num"
+		echo
 	fi
 
 	# return appropriate exit code
