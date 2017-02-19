@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.7 # program version
+VERSION=2.0.8 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -538,6 +538,7 @@ function check() {
 		elif [[ "$line" =~ $regex_no_tag ]]; then
 			checksum=$(echo "$line" | cut -d' ' -f1)
 			file=${line/  /\#}
+			file=${file/ \*/\#}
 			file=$(echo $file | cut -d\# -f2)
 
 			if [ ! -z $ALGORITHM ]; then
