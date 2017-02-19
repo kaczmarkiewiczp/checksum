@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.4 # program version
+VERSION=2.0.5 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -60,11 +60,10 @@ function usage() {
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when veryfying checksums:\n"
-	echo -en "  -c, --check\tread checksums from FILEs and check them\n"
-	echo -en "      --detect-algorithm\ttry to detect algorithm used\n"
+	echo -en "  -c, --check\t\tread checksums from FILEs and check them\n"
+	echo -en "      --detect-algorithm try to detect algorithm used\n"
 	echo -en "      --ignore-missing\tdon't fail or report status for" \
 		 "missing files\n"
-	# TODO implement
 	echo -en "      --ignore-errors\tignore improperly formatted lines\n"
 }
 
@@ -174,6 +173,9 @@ function process_args() {
 				;;
 			--ignore-missing)
 				FLAG_IGNORE_MISS=true
+				;;
+			--ignore-errors)
+				FLAG_IGNORE_ERR=true
 				;;
 			-q|--quiet)
 				FLAG_QUIET=true
@@ -496,6 +498,7 @@ function print_check_summary() {
 	fi
 }
 
+# check hashes from a file
 function check() {
 	# regex for detecting checksums
 	regex_tag="^(MD5|SHA1|SHA224|SHA256|SHA384|SHA512)[[:space:]]\(.+\)"
@@ -511,6 +514,11 @@ function check() {
 	missing_files=() # missing files
 
 	while read line; do
+		# ignore empty lines
+		if [ -z "$line" ]; then 
+			continue 
+		fi
+
 		((file_num++))
 
 		if [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
