@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.6 # program version
+VERSION=2.0.7 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -522,9 +522,9 @@ function check() {
 		((file_num++))
 
 		if [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
-			print_check_progress $file_num $total_num $ok_num \
-					     ${#failed_files[@]} \
-					     ${#missing_files[@]} $error_num
+			print_check_progress "$file_num" "$total_num" \
+					     "$ok_num" "${#failed_files[@]}" \
+					     "${#missing_files[@]}" "$error_num"
 		fi
 
 		if [[ "$line" =~ $regex_tag ]]; then
