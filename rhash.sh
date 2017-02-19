@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.0.8 # program version
+VERSION=2.0.9 # program version
 EXE="$(basename $0)" # program name
 DEBUG=false # debugging mode
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
@@ -507,6 +507,7 @@ function check() {
 	regex_no_tag="^([a-f]|[A-F]|[0-9])+[[:space:]].+$"
 
 	total_num=$(wc -l "$1") # total number of lines/files scanned
+	total_num=$(echo $total_num | cut -d' ' -f1)
 	file_num=0 # current file scanned (for progress output)
 	ok_num=0 # files passed
 	error_num=0 # lines with errors
