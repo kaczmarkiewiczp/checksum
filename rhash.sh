@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.3.4 # program version
+VERSION=2.3.5 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -717,8 +717,8 @@ function main() {
 	done
 
 	# check if we should sort the output
-	if [ $FLAG_SORT = true ] && [ $FLAG_OUT2STDOUT = false ]; then
-		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE" 2>/dev/null
+	if [ $FLAG_SORT = true ] && [ -t 1 ]; then
+		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 	fi
 
 	if [ $FLAG_TIMESTAMP = true ]; then
