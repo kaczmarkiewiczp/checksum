@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.3.0 # program version
+VERSION=2.3.1 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -12,7 +12,7 @@ OUTPUT_FILE="" # user specified output file
 TOTAL_FILES=0 # total files hashed
 
 # flags from processing command line arguments
-FLAG_SORT=true # sort output
+FLAG_SORT=false # sort output
 FLAG_APPEND=false # whether to append to output or overwrite it
 FLAG_NO_TAG=false # --tag flag for HASH_COMMAND
 FLAG_OUT2STDOUT=false # output to stdout instead of file
@@ -55,8 +55,7 @@ function usage() {
 	echo -en "  -a, --append\t\tappend to output file instead of" \
 		 "overwriting it\n"
 	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
-	echo -en "      --no-sort\t\tdon't sort output file (default" \
-		 " behavior is to sort)\n"
+	echo -en "  -s, --sort\t\tsort output file\n"
 	echo -en "  -t. --timestamp\tadd timestamp to the beginning of output" \
 	         "file\n"
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
@@ -107,7 +106,7 @@ function check_flags() {
 			try_help
 			exit 112
 		elif [ $FLAG_SORT = false ]; then
-			echo "$EXE: the --no-sort option is meaningless when" \
+			echo "$EXE: the --sort option is meaningless when" \
 			     "verifying checksums" 1>&2
 			try_help
 			exit 113
@@ -139,8 +138,8 @@ function check_flags() {
 	fi
 
 	if [ $FLAG_OUT2STDOUT = true ]; then
-		if [ $FLAG_SORT = false ]; then
-			echo "$EXE: the --no-sort option is meaningless when" \
+		if [ $FLAG_SORT = true ]; then
+			echo "$EXE: the --sort option is meaningless when" \
 			     "printing to stdout" 1>&2
 			try_help
 			exit 118
@@ -192,8 +191,8 @@ function process_args() {
 			-c|--check)
 				FLAG_CHECK=true
 				;;
-			--no-sort)
-				FLAG_SORT=false
+			-s|--sort)
+				FLAG_SORT=true
 				;;
 			-o|--out2stdout)
 				FLAG_OUT2STDOUT=true
