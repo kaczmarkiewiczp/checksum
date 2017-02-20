@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.3.3 # program version
+VERSION=2.3.4 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -589,8 +589,8 @@ function check() {
 	missing_files=() # missing files
 
 	while read line; do
-		# ignore empty lines
-		if [ -z "$line" ]; then 
+		# ignore empty lines or comments
+		if [ -z "$line" ] || [[ "$line" =~ ^[[:space:]]*#.*$ ]] ; then 
 			continue 
 		fi
 
