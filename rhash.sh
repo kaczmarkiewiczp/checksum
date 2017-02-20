@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.2.0 # program version
+VERSION=2.3.0 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -19,6 +19,7 @@ FLAG_OUT2STDOUT=false # output to stdout instead of file
 FLAG_QUIET=false # no output (except for -o and stderr)
 FLAG_PROGRESS=true # display progress during hahing
 FLAG_SUMMARY=true # print summary at the end
+FLAG_TIMESTAMP=false # include timestamp in output file
 FLAG_CHECK=false # check checksums inside file(s)
 FLAG_DETECT_ALG=false # try to detect algorithm for checking
 FLAG_IGNORE_MISS=false # ignore missing files when checking
@@ -56,9 +57,11 @@ function usage() {
 	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
 	echo -en "      --no-sort\t\tdon't sort output file (default" \
 		 " behavior is to sort)\n"
+	echo -en "  -t. --timestamp\tadd timestamp to the beginning of output" \
+	         "file\n"
 	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
 
-	echo -en "\nOptions useful only when veryfying checksums:\n"
+	echo -en "\nOptions useful only when verifying checksums:\n"
 	echo -en "  -c, --check\t\tread checksums from FILEs and check them\n"
 	echo -en "      --detect-algorithm try to detect algorithm used\n"
 	echo -en "      --ignore-missing\tdon't fail or report status for" \
@@ -113,6 +116,11 @@ function check_flags() {
 			     "verifying checksums" 1>&2
 			try_help
 			exit 114
+		elif [ $FLAG_TIMESTAMP = true ]; then
+			echo "$EXE: the --timestamp option is meaningless" \
+			     "when verifying checksums" 1>&2
+			try_help
+			exit 115
 		fi
 	fi
 
@@ -120,21 +128,28 @@ function check_flags() {
 		echo "$EXE: the --append option is meaningless when printing" \
 		     "to stdout" 1>&2
 		try_help
-		exit 115
+		exit 116
 	fi
 
 	if [ ! -z $ALGORITHM ] && [ $FLAG_DETECT_ALG = true ]; then
 		echo "$EXE: the --detect-algorithm option is meaningless" \
 			"when an algorithm has been specified" 1>&2
 		try_help
-		exit 116
+		exit 117
 	fi
 
-	if [ $FLAG_OUT2STDOUT = true ] && [ $FLAG_SORT = false ]; then
-		echo "$EXE: the --no-sort option is meaningless when printing" \
-			"to stdout" 1>&2
-		try_help
-		exit 117
+	if [ $FLAG_OUT2STDOUT = true ]; then
+		if [ $FLAG_SORT = false ]; then
+			echo "$EXE: the --no-sort option is meaningless when" \
+			     "printing to stdout" 1>&2
+			try_help
+			exit 118
+		elif [ $FLAG_TIMESTAMP = true ]; then
+			echo "$EXE: the --timestamp option is meaningless" \
+			     "when printing to stdout" 1>&2
+			try_help
+			exit 118
+		fi
 	fi
 }
 
@@ -225,6 +240,9 @@ function process_args() {
 				;;
 			-P|--no-progress)
 				FLAG_PROGRESS=false
+				;;
+			-t|--timestamp)
+				FLAG_TIMESTAMP=true
 				;;
 			--detect-algorithm)
 				FLAG_DETECT_ALG=true
@@ -702,6 +720,11 @@ function main() {
 	# check if we should sort the output
 	if [ $FLAG_SORT = true ] && [ $FLAG_OUT2STDOUT = false ]; then
 		sort -k2 "$OUTPUT_FILE" -o "$OUTPUT_FILE" 2>/dev/null
+	fi
+
+	if [ $FLAG_TIMESTAMP = true ]; then
+		echo -e "# generated on $(date +%F)\n$(cat $OUTPUT_FILE)" \
+			> $OUTPUT_FILE
 	fi
 
 	end=$(date +%s)
