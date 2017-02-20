@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.3.2 # program version
+VERSION=2.3.3 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -105,7 +105,7 @@ function check_flags() {
 			     "when verifying checksums" 1>&2
 			try_help
 			exit 112
-		elif [ $FLAG_SORT = false ]; then
+		elif [ $FLAG_SORT = true ]; then
 			echo "$EXE: the --sort option is meaningless when" \
 			     "verifying checksums" 1>&2
 			try_help
