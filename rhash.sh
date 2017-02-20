@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.3.1 # program version
+VERSION=2.3.2 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -39,33 +39,33 @@ function usage() {
 		 "directory\n"
 
 	echo -en "Options useful when creating and veryfying checksums:\n"
-	echo -en "  -A ALGORITHM,  --ALGORITHM,  --algorithm=ALGORITHM"
+	echo -en "  -A,  --ALGORITHM,   --algorithm=ALGORITHM"
 	echo -en "   use specified algorithm\n"
 	echo -en "\t\t\tThe following options are available:\n"
 	echo -en "\t\t\t    md5 (default)\n\t\t\t    sha1\n\t\t\t    sha224\n "
 	echo -en "\t\t\t    sha256\n\t\t\t    sha384\n\t\t\t    sha512\n"
-	echo -en "      --no-summary\tdon't display summary at the end\n"
-	echo -en "  -P, --no-progress\tdon't display progress\n"
-	echo -en "  -q, --quiet\t\tsuppress non-error messages" \
+	echo -en "      --no-summary\t don't display summary at the end\n"
+	echo -en "  -P, --no-progress\t don't display progress\n"
+	echo -en "  -q, --quiet\t\t suppress non-error messages" \
 		 "(excluding -o output)\n"
-	echo -en "  -h, --help\t\tdisplay this message and quit\n"
-	echo -en "      --version\t\tprint version information and exit\n"
+	echo -en "  -h, --help\t\t display this message and quit\n"
+	echo -en "      --version\t\t print version information and exit\n"
 
 	echo -en "\nOptions useful only when creating checksums:\n"
-	echo -en "  -a, --append\t\tappend to output file instead of" \
+	echo -en "  -a, --append\t\t append to output file instead of" \
 		 "overwriting it\n"
-	echo -en "  -o, --out2stdout\toutput hashes directly to stdout\n"
-	echo -en "  -s, --sort\t\tsort output file\n"
-	echo -en "  -t. --timestamp\tadd timestamp to the beginning of output" \
+	echo -en "  -o, --out2stdout\t output hashes directly to stdout\n"
+	echo -en "  -s, --sort\t\t sort output file\n"
+	echo -en "  -t, --timestamp\t add timestamp to the beginning of output" \
 	         "file\n"
-	echo -en "      --no-tag\t\tdo not create a BSD-style checksum\n"
+	echo -en "      --no-tag\t\t do not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when verifying checksums:\n"
-	echo -en "  -c, --check\t\tread checksums from FILEs and check them\n"
+	echo -en "  -c, --check\t\t read checksums from FILEs and check them\n"
 	echo -en "      --detect-algorithm try to detect algorithm used\n"
-	echo -en "      --ignore-missing\tdon't fail or report status for" \
+	echo -en "      --ignore-missing\t don't fail or report status for" \
 		 "missing files\n"
-	echo -en "      --ignore-errors\tignore improperly formatted lines\n"
+	echo -en "      --ignore-errors\t ignore improperly formatted lines\n"
 }
 
 # output message for getting help
