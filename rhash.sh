@@ -41,36 +41,37 @@ function usage() {
 	echo -en "Options useful when creating and veryfying checksums:\n"
 	echo -en "  -A,  --ALGORITHM,\n"
 	echo -en "       --algorithm=ALGORITHM\n"
-	echo -en "\t\t\t use specified algorithm\n"
-	echo -en "\t\t\t The following options are available:\n"
-	echo -en "\t\t\t    md5 (default)\n\t\t\t    sha1\n\t\t\t    sha224\n "
-	echo -en "\t\t\t    sha256\n\t\t\t    sha384\n\t\t\t    sha512\n"
-	echo -en "      --no-summary\t don't display summary at the end\n"
-	echo -en "  -P, --no-progress\t don't display progress\n"
-	echo -en "  -q, --quiet\t\t suppress non-error messages" \
-		 "(excluding -o output)\n"
-	echo -en "  -h, --help\t\t display this message and quit\n"
-	echo -en "      --version\t\t print version information and exit\n"
+	echo -en "\t\t\t\tuse specified algorithm\n"
+	echo -en "\t\t\t\tThe following options are available:\n"
+	echo -en "\t\t\t\t    md5 (default)\n\t\t\t\t    sha1\n\t\t\t\t"
+	echo -en "    sha224\n\t\t\t\t    sha256\n\t\t\t\t    sha384\n\t\t\t\t"
+	echo -en "    sha512\n"
+	echo -en "      --no-summary\t\tdon't display summary at the end\n"
+	echo -en "  -P, --no-progress\t\tdon't display progress\n"
+	echo -en "  -q, --quiet\t\t\tsuppress non-error messages\n"
+	echo -en "  -h, --help\t\t\tdisplay this message and quit\n"
+	echo -en "      --version\t\t\tprint version information and exit\n"
 
 	echo -en "\nOptions useful only when creating checksums:\n"
-	echo -en "  -a, --append\t\t append to output file instead of" \
-		 "overwriting it\n"
-	echo -en "  -o, --out2stdout\t output hashes directly to stdout\n"
-	echo -en "  -s, --sort\t\t sort output file\n"
-	echo -en "  -t[+FORMAT], --timestamp[=+FORMAT]\n"
-	echo -en "\t\t\t add timestamp to the beginning" \
+	echo -en "  -a, --append\t\t\tappend to output file\n"
+	echo -en "  -o, --out2stdout\t\toutput hashes directly to stdout\n"
+	echo -en "  -s, --sort\t\t\tsort output file\n"
+	echo -en "      --no-tag\t\t\tdo not create a BSD-style checksum\n"
+	echo -en "  -t[+FORMAT],\n      --timestamp[=+FORMAT]\n"
+	echo -en "\t\t\t\tadd timestamp to the beginning" \
 	         "of output file\n"
-	echo -en "\t\t\t If FORMAT is specified, the date will be printed\n" \
-	      	 "\t\t\t using the specified format. For list of available\n" \
-		 "\t\t\t formats, see the FORAMAT section in date(1)\n"
-	echo -en "      --no-tag\t\t do not create a BSD-style checksum\n"
+	echo -en "\t\t\t\tIf FORMAT is specified, the date will be\n"
+	echo -en "\t\t\t\tprinted using the specified format.\n"
+	echo -en "\t\t\t\tFor a list of available formats,\n"
+	echo -en "\t\t\t\tsee the FORAMAT section in date(1)\n"
+	echo -en "      --no-tag\t\t\tdo not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when verifying checksums:\n"
-	echo -en "  -c, --check\t\t read checksums from FILEs and check them\n"
-	echo -en "      --detect-algorithm try to detect algorithm used\n"
-	echo -en "      --ignore-missing\t don't fail or report status for" \
+	echo -en "  -c, --check\t\t\tread checksums from FILEs and check them\n"
+	echo -en "      --detect-algorithm\ttry to detect algorithm used\n"
+	echo -en "      --ignore-missing\t\tdon't fail or report status for" \
 		 "missing files\n"
-	echo -en "      --ignore-errors\t ignore improperly formatted lines\n"
+	echo -en "      --ignore-errors\t\tignore improperly formatted lines\n"
 }
 
 # output message for getting help
