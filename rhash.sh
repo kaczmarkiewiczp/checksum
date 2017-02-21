@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.4.0 # program version
+VERSION=2.4.1 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -154,6 +154,14 @@ function check_flags() {
 			     "when printing to stdout" 1>&2
 			try_help
 			exit 118
+		fi
+	fi
+
+	if [ $FLAG_TIMESTAMP = true ] && [ ! -z "$TIMESTAMP_FORMAT" ]; then
+		if [[ $TIMESTAMP_FORMAT =~ .*\ .* ]]; then
+			echo "$EXE: the timestamp format is invalid" 1>&2
+			echo "$EXE: Try 'date --help' for more information" 1>&2
+			exit 119
 		fi
 	fi
 }
@@ -308,7 +316,7 @@ function process_args() {
 						echo "'${opt:1}'" 1>&2
 					fi
 					try_help
-					exit 103
+					exit 104
 				fi
 				;;
 			*)
@@ -326,7 +334,7 @@ function process_args() {
 				else echo "'--algorithm'" 1>&2
 				fi
 				try_help
-				exit 104
+				exit 105
 			fi
 			expect_a=false
 		fi
@@ -342,11 +350,11 @@ function process_args() {
 		elif [ $FLAG_OUT2STDOUT = true ]; then
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
-			exit 105
+			exit 106
 		else
 			echo "$EXE: missing files" 1>&2
 			try_help
-			exit 106
+			exit 107
 		fi
 	else # output to file
 		# check that at least two files (output and input)
@@ -356,11 +364,11 @@ function process_args() {
 		elif [ -d "${files[0]}" ]; then
 			echo "$EXE: missing output file" 1>&2
 			try_help
-			exit 107
+			exit 108
 		else
 			echo "$EXE: missing files/directories" 1>&2
 			try_help
-			exit 108
+			exit 109
 		fi
 
 		# clear file if it exists and append flag is not specified
