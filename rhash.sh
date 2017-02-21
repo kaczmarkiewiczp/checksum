@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.3.5 # program version
+VERSION=2.4.0 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -10,7 +10,7 @@ FILES="" # all the files inside a directory
 INPUT_FILES=() # all the specified directories
 OUTPUT_FILE="" # user specified output file
 TOTAL_FILES=0 # total files hashed
-
+TIMESTAMP_FORMAT="" # optional format of date for timestamp
 # flags from processing command line arguments
 FLAG_SORT=false # sort output
 FLAG_APPEND=false # whether to append to output or overwrite it
@@ -56,8 +56,11 @@ function usage() {
 		 "overwriting it\n"
 	echo -en "  -o, --out2stdout\t output hashes directly to stdout\n"
 	echo -en "  -s, --sort\t\t sort output file\n"
-	echo -en "  -t, --timestamp\t add timestamp to the beginning of output" \
-	         "file\n"
+	echo -en "  -t, --timestamp[=+FORMAT] add timestamp to the beginning" \
+	         "of output file\n"
+	echo -en "\t\t\t If FORMAT is specified, the date will be printed\n" \
+	      	 "\t\t\t using the specified format. For list of available\n" \
+		 "\t\t\t formats, see the FORAMAT section in date(1)\n"
 	echo -en "      --no-tag\t\t do not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when verifying checksums:\n"
@@ -155,7 +158,8 @@ function check_flags() {
 # process arguments
 function process_args() {
 	files=() # all non-flag arguments (output and input files)
-	expect_a=false
+	expect_a=false # expecting argument to --algorithm
+	expect_t=false # expecting argument to --timestamp
 
 	args=("$@") # put arguments into array
 
@@ -184,6 +188,15 @@ function process_args() {
 			opt="--$opt"
 		fi
 
+		# expecting option for -t or --algorithm
+		if [ $expect_t = true ] && [[ $opt = \+* ]]; then
+			expect_t=false
+			TIMESTAMP_FORMAT="$opt"
+			continue
+		elif [ $expect_t = true ]; then
+			expect_t=false
+		fi
+
 		case $opt in
 			-a|--append)
 				FLAG_APPEND=true
@@ -200,7 +213,7 @@ function process_args() {
 			--md5|--sha1|--sha224|--sha256|--sha384|--sha512)
 				ALGORITHM=${opt:2} # remove leading '--'
 				;;
-			-A)
+			-A|--algorithm)
 				ALGORITHM=""
 				expect_a=true
 				continue
@@ -242,6 +255,22 @@ function process_args() {
 				;;
 			-t|--timestamp)
 				FLAG_TIMESTAMP=true
+				TIMESTAMP_FORMAT=""
+				expect_t=true
+				;;
+			--timestamp=*)
+				TIMESTAMP_FORMAT=$(echo $opt | cut -d'=' -f2)
+				if [ -z $TIMESTAMP_FORMAT ]; then
+					expect_t=true
+					continue
+				elif [[ ${TIMESTAMP_FORMAT:0:1} = '+' ]]; then
+					: # don't do anything
+				else
+					echo "$EXE: unknown argument to" \
+					     "'--timestamp'" 1>&2
+					try_help
+					exit 103
+				fi
 				;;
 			--detect-algorithm)
 				FLAG_DETECT_ALG=true
@@ -722,7 +751,12 @@ function main() {
 	fi
 
 	if [ $FLAG_TIMESTAMP = true ]; then
-		echo -e "# generated on $(date +%F)\n$(cat $OUTPUT_FILE)" \
+		if [ -z $TIMESTAMP_FORMAT ]; then
+			timestamp="$(date +%F)"
+		else
+			timestamp="$(date $TIMESTAMP_FORMAT)"
+		fi
+		echo -e "# generated on $timestamp\n$(cat $OUTPUT_FILE)" \
 			> $OUTPUT_FILE
 	fi
 
