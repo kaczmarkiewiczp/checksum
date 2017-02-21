@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.4.2 # program version
+VERSION=2.4.3 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -530,7 +530,7 @@ function create_check_command() {
 			;;
 	esac
 
-	HASH_COMMAND+="--check --ignore-missing --quiet --status -"
+	HASH_COMMAND+="--check --quiet --status -"
 }
 
 # try and detect algorithm based on hash length
@@ -673,8 +673,10 @@ function check() {
 			continue
 		fi
 
-		if [ ! -f "$file" ]; then
+		if [ ! -f "$file" ] && [ $FLAG_IGNORE_MISS = false ]; then
 			missing_files+=("$file")
+			continue
+		elif [ ! -f "$file" ]; then
 			continue
 		fi
 
