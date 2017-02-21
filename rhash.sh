@@ -39,9 +39,10 @@ function usage() {
 		 "directory\n"
 
 	echo -en "Options useful when creating and veryfying checksums:\n"
-	echo -en "  -A,  --ALGORITHM,   --algorithm=ALGORITHM"
-	echo -en "   use specified algorithm\n"
-	echo -en "\t\t\tThe following options are available:\n"
+	echo -en "  -A,  --ALGORITHM,\n"
+	echo -en "       --algorithm=ALGORITHM\n"
+	echo -en "\t\t\t use specified algorithm\n"
+	echo -en "\t\t\t The following options are available:\n"
 	echo -en "\t\t\t    md5 (default)\n\t\t\t    sha1\n\t\t\t    sha224\n "
 	echo -en "\t\t\t    sha256\n\t\t\t    sha384\n\t\t\t    sha512\n"
 	echo -en "      --no-summary\t don't display summary at the end\n"
@@ -56,7 +57,8 @@ function usage() {
 		 "overwriting it\n"
 	echo -en "  -o, --out2stdout\t output hashes directly to stdout\n"
 	echo -en "  -s, --sort\t\t sort output file\n"
-	echo -en "  -t, --timestamp[=+FORMAT] add timestamp to the beginning" \
+	echo -en "  -t[+FORMAT], --timestamp[=+FORMAT]\n"
+	echo -en "\t\t\t add timestamp to the beginning" \
 	         "of output file\n"
 	echo -en "\t\t\t If FORMAT is specified, the date will be printed\n" \
 	      	 "\t\t\t using the specified format. For list of available\n" \
