@@ -64,7 +64,6 @@ function usage() {
 	echo -en "\t\t\t\tprinted using the specified format.\n"
 	echo -en "\t\t\t\tFor a list of available formats,\n"
 	echo -en "\t\t\t\tsee the FORAMAT section in date(1)\n"
-	echo -en "      --no-tag\t\t\tdo not create a BSD-style checksum\n"
 
 	echo -en "\nOptions useful only when verifying checksums:\n"
 	echo -en "  -c, --check\t\t\tread checksums from FILEs and check them\n"
