@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.4.1 # program version
+VERSION=2.4.2 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -447,7 +447,7 @@ function print_hash_progress() {
 	aval_pad=$(($term_w - $aval_pad - 1))
 	
 	# create padding
-	if [ $aval_pad -gt 1 ]; then
+	if [ $aval_pad -ge 1 ]; then
 		padding=$(for ((i=1; i<=$aval_pad; i++)); do echo -n " "; done)
 	else
 		padding=""
