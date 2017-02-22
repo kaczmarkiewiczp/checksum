@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.5.2 # program version
+VERSION=2.5.3 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -573,7 +573,7 @@ function print_check_progress() {
 
 	if [ ${#file} -gt $term_w ]; then
 		# calculate available width
-		aval_w=$(($term_w - ${#file}))
+		aval_w=$(($term_w - 5))
 		# how many characters we need to remove
 		remove=$((${#file} - $aval_w))
 		# split string in half
