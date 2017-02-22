@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.4.3 # program version
+VERSION=2.5.0 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -562,14 +562,32 @@ function detect_algorithm() {
 
 # outputs progress during hash checking
 function print_check_progress() {
-	file_num=$1
-	total_num=$2
-	ok=$3
-	failed=$4
-	missing=$5
-	error=$6
+	file="$1"
+	file_num=$2
+	total_num=$3
+	ok=$4
+	failed=$5
+	missing=$6
+	error=$7
+	term_w=$(tput cols)
 
-	progress="FILE: $file_num of $total_num"
+	if [ ${#file} -gt $term_w ]; then
+		# calculate available width
+		aval_w=$(($term_w - ${#file}))
+		# how many characters we need to remove
+		remove=$((${#file} - $aval_w))
+		# split string in half
+		# remove equal amount of chars from both halves
+		first_half="${file:0:$((${#file} / 2))}"
+		first_half="${first_half::-$(($remove / 2))}"
+
+		second_half="${file:$((${#file} / 2)):${#file}}"
+		second_half="${second_half:$(($remove / 2))}"
+
+		file="$first_half...$second_half"
+	fi
+
+	progress="\033[42m\033[97mFILE: $file_num of $total_num\033[0m"
 	progress+="   OK: $ok"
 	progress+="   FAILED: $failed"
 	if [ $FLAG_IGNORE_MISS = false ]; then
@@ -579,7 +597,8 @@ function print_check_progress() {
 		progress+="   ERROR: $error"
 	fi
 
-	echo -ne "\r\033[K$progress"
+	echo -ne "\r\033[K$file\033[1B"
+	echo -ne "\r\033[K$progress\033[1A"
 }
 
 # output summary of check
@@ -635,12 +654,6 @@ function check() {
 
 		((file_num++))
 
-		if [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
-			print_check_progress "$file_num" "$total_num" \
-					     "$ok_num" "${#failed_files[@]}" \
-					     "${#missing_files[@]}" "$error_num"
-		fi
-
 		if [[ "$line" =~ $regex_tag ]]; then
 			algorithm=$(echo "$line" | cut -d' ' -f1)
 			# extract file path
@@ -680,6 +693,12 @@ function check() {
 			continue
 		fi
 
+		if [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
+			print_check_progress "$file" "$file_num" "$total_num" \
+					     "$ok_num" "${#failed_files[@]}" \
+					     "${#missing_files[@]}" "$error_num"
+		fi
+
 		$(echo "$line" | $HASH_COMMAND 2>/dev/null)
 		if [ $? -eq 0 ]; then
 			((ok_num++))
@@ -692,9 +711,10 @@ function check() {
 		print_check_summary $ok_num $error_num "failed_files[@]" \
 				    "missing_files[@]"
 	elif [ $FLAG_PROGRESS = true ] && [ $FLAG_QUIET = false ]; then
-		print_check_progress "$file_num" "$total_num" \
+		print_check_progress "$file" "$file_num" "$total_num" \
 				     "$ok_num" "${#failed_files[@]}" \
 				     "${#missing_files[@]}" "$error_num"
+		echo
 		echo
 	fi
 
