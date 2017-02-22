@@ -2,7 +2,7 @@
 # rhash: recursively scan specified directory for files. Create a hash of all
 # the files and append them to a specified output file
 
-VERSION=2.5.1 # program version
+VERSION=2.5.2 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -609,7 +609,6 @@ function print_check_progress() {
 
 	echo -ne "\r\033[K$file\033[1B"
 	echo -ne "\r\033[K$progress\033[1A"
-	sleep 1
 }
 
 # output summary of check
@@ -630,7 +629,7 @@ function print_check_summary() {
 	if [ $FLAG_IGNORE_ERR = false ]; then
 		echo -n "   ERRORED: $error_num"
 	fi
-	echo
+	echo -en "\n\r\033[K"
 
 	for i in "${failed_files[@]}"; do echo "[FAILED]  $i"; done
 
@@ -725,8 +724,7 @@ function check() {
 		print_check_progress "$file" "$file_num" "$total_num" \
 				     "$ok_num" "${#failed_files[@]}" \
 				     "${#missing_files[@]}" "$error_num"
-		echo
-		echo
+		echo -en "\n\n"
 	fi
 
 	# return appropriate exit code
