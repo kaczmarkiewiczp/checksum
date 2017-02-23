@@ -1,8 +1,9 @@
 #!/bin/bash
-# rhash: recursively scan specified directory for files. Create a hash of all
-# the files and append them to a specified output file
+# checksum: compute and verify MD5/SHA-1/SHA-2 checksums.
+# GPLv3 Licence
+# Author: Patryk Kaczmarkiewicz
 
-VERSION=2.5.4 # program version
+VERSION=2.5.5 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -35,8 +36,7 @@ function usage() {
 	echo -en "  or:  $EXE [OPTION]... -o FILE...\n"
 	echo -en "  or:  $EXE [OPTION]... -c FILE...\n"
 
-	echo -en "Recursively create or check hashes of files inside supplied" \
-		 "directory\n"
+	echo -en "Recursively create and verify MD5/SHA-1/SHA-2 checksums\n"
 
 	echo -en "Options useful when creating and veryfying checksums:\n"
 	echo -en "  -A,  --ALGORITHM,\n"
@@ -302,6 +302,8 @@ function process_args() {
 				;;
 			--version)
 				echo "$EXE version $VERSION"
+				echo "GPLv3 Licence"
+				echo "Written by Patryk Kaczmarkiewicz"
 				exit 0
 				;;
 			-*|--*)
@@ -427,6 +429,7 @@ function print_hash_progress() {
 	# if output is bigger than terminal width we have to shorten it
 	if [ $length -gt $term_w ]; then
 		# calculate available width for 'prefix'
+		# - 5 since we'll add '...' plus some extra for rounding
 		aval_w=$(( $term_w - ${#postfix} - 5))
 		# how many characters we need to remove
 		remove=$(( ${#prefix} - $aval_w))
@@ -475,7 +478,7 @@ function print_hash_summary() {
 }
 
 # hash files in the array of files
-function rhash() {
+function checksum() {
 	file_num=1 # keep track of which file is being hashed
 	total=$(echo "$FILES" | wc -l) # total number of files for current dir
 
@@ -494,6 +497,7 @@ function rhash() {
 		fi
 		((file_num++))
 	done <<< "$FILES"
+
 	if [ $FLAG_OUT2STDOUT = false ] && 
 	   [ $FLAG_QUIET = false -a $FLAG_PROGRESS = true ]; then 
 		echo ""
@@ -587,6 +591,7 @@ function print_check_progress() {
 		file="$first_half...$second_half"
 	fi
 
+	# get appropriate color for output
 	if [ $FLAG_IGNORE_ERR = false ] && [ $error -gt 0 ]; then
 		color="\033[41m"
 	elif [ $FLAG_IGNORE_MISS = false ] && [ $missing -gt 0 ]; then
@@ -782,7 +787,7 @@ function main() {
 	for dir in "${INPUT_FILES[@]}"; do
 		get_all_files "$dir"
 		if [ $? -eq 0 ] && [ ! -z "$FILES" ]; then
-			rhash
+			checksum
 		fi
 	done
 
