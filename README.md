@@ -1,5 +1,5 @@
 # checksum
-Command line tool for recursively creating and verifying checksums.
+Bash script for recursively creating and verifying checksums.
 
 Uses GNU core utilities to create and verify checksums of all files inside specified directories.
 
