@@ -3,7 +3,7 @@
 # GPLv3 Licence
 # Author: Patryk Kaczmarkiewicz
 
-VERSION=2.5.5 # program version
+VERSION=2.5.6 # program version
 EXE="$(basename $0)" # program name
 HASH_COMMAND="" # command with appropriate flags used for hashing (i.e md5sum)
 ALGORITHM="" # algorithm used for hashing
@@ -373,8 +373,8 @@ function process_args() {
 		fi
 
 		# clear file if it exists and append flag is not specified
-		if [ $FLAG_APPEND = false ] && [ -e $OUTPUT_FILE ]; then
-			> $OUTPUT_FILE
+		if [ $FLAG_APPEND = false ] && [ -e "$OUTPUT_FILE" ]; then
+			> "$OUTPUT_FILE"
 		fi
 	fi
 
@@ -493,7 +493,7 @@ function checksum() {
 		if [ $FLAG_OUT2STDOUT = true ]; then
 			$HASH_COMMAND "$file"
 		else # output to stdout
-			$HASH_COMMAND "$file" >> $OUTPUT_FILE
+			$HASH_COMMAND "$file" >> "$OUTPUT_FILE"
 		fi
 		((file_num++))
 	done <<< "$FILES"
@@ -802,8 +802,8 @@ function main() {
 		else
 			timestamp="$(date $TIMESTAMP_FORMAT)"
 		fi
-		echo -e "# generated on $timestamp\n$(cat $OUTPUT_FILE)" \
-			> $OUTPUT_FILE
+		echo -e "# generated on $timestamp\n$(cat "$OUTPUT_FILE")" \
+			> "$OUTPUT_FILE"
 	fi
 
 	end=$(date +%s)
